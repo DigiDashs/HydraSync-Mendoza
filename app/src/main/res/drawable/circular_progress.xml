@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Background Ring -->
+    <item>
+        <shape android:shape="ring"
+            android:innerRadiusRatio="2.5"
+            android:thicknessRatio="20"
+            android:useLevel="false">
+            <solid android:color="@color/border_gray" />
+        </shape>
+    </item>
+
+    <!-- Progress Ring -->
+    <item>
+        <shape android:shape="ring"
+            android:innerRadiusRatio="2.5"
+            android:thicknessRatio="20"
+            android:useLevel="true">
+            <solid android:color="@color/hydra_blue" />
+        </shape>
+    </item>
+
+</layer-list>
