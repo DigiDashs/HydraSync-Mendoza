@@ -14,6 +14,7 @@ import com.example.hydrasync.login.LoginActivity
 //import com.example.hydrasync.profile.ProfileActivity
 import com.example.hydrasync.settings.data.SettingsData
 import com.example.hydrasync.history.HistoryActivity
+import com.example.hydrasync.profile.ProfileActivity
 
 
 class SettingsActivity : AppCompatActivity(), SettingsContract.View {
@@ -166,9 +167,8 @@ class SettingsActivity : AppCompatActivity(), SettingsContract.View {
     }
 
     override fun navigateToProfile() {
-        // val intent = Intent(this, ProfileActivity::class.java)
-        // startActivity(intent)
-        showToast("Profile feature coming soon!")
+        val intent = Intent(this, ProfileActivity::class.java)
+        startActivity(intent)
     }
 
     override fun navigateToHome() {

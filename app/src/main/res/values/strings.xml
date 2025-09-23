@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">HydraSync</string>
+    <string-array name="gender_options">
+        <item>Male</item>
+        <item>Female</item>
+        <item>Other</item>
+        <item>Prefer not to say</item>
+    </string-array>
 </resources>
