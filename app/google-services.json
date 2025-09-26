@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "222329729985",
+    "project_id": "hydrasync-14b0a",
+    "storage_bucket": "hydrasync-14b0a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:222329729985:android:f3c206ac53d1a17de47540",
+        "android_client_info": {
+          "package_name": "com.example.hydrasync"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyABAXULQqRgcpa_Mp3Odszb2zP6ZAnYFq0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

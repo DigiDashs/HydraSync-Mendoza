@@ -1,6 +1,12 @@
 package com.example.hydrasync.login
 
-class LoginRepository {
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import kotlinx.coroutines.tasks.await
+
+class LoginRepository private constructor() {
+
+    private val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
 
     companion object {
         @Volatile
@@ -13,48 +19,67 @@ class LoginRepository {
         }
     }
 
-    // Sample users for testing
-    private val registeredUsers = mutableListOf(
-        User("1", "admin@hydrasync.com", "Admin", "User"),
-        User("2", "john@example.com", "John", "Doe")
-    )
+    suspend fun login(email: String, password: String): LoginResponse {
+        return try {
+            val authResult = firebaseAuth.signInWithEmailAndPassword(email, password).await()
+            val firebaseUser = authResult.user
 
-    private val userCredentials = mapOf(
-        "admin@hydrasync.com" to "admin123",
-        "john@example.com" to "password123"
-    )
-
-    private var currentUser: User? = null
-
-    fun login(email: String, password: String): LoginResponse {
-        // Simulate network delay
-        Thread.sleep(1500)
-
-        val storedPassword = userCredentials[email]
-
-        return if (storedPassword == password) {
-            currentUser = registeredUsers.find { it.email == email }
-            LoginResponse(true, "Login successful", currentUser)
-        } else {
-            LoginResponse(false, "Invalid email or password")
+            if (firebaseUser != null) {
+                // Convert FirebaseUser to our User model
+                val names = firebaseUser.displayName?.split(" ") ?: listOf("", "")
+                val user = User(
+                    uid = firebaseUser.uid,
+                    email = firebaseUser.email ?: email,
+                    firstName = names.getOrNull(0) ?: "",
+                    lastName = names.getOrNull(1) ?: ""
+                )
+                LoginResponse(true, "Login successful", user)
+            } else {
+                LoginResponse(false, "Authentication failed")
+            }
+        } catch (e: Exception) {
+            LoginResponse(false, getFirebaseErrorMessage(e))
         }
     }
 
-    fun getCurrentUser(): User? = currentUser
+    fun getCurrentUser(): User? {
+        val firebaseUser = firebaseAuth.currentUser
+        return firebaseUser?.let { user ->
+            val names = user.displayName?.split(" ") ?: listOf("", "")
+            User(
+                uid = user.uid,
+                email = user.email ?: "",
+                firstName = names.getOrNull(0) ?: "",
+                lastName = names.getOrNull(1) ?: ""
+            )
+        }
+    }
 
     fun logout() {
-        currentUser = null
+        firebaseAuth.signOut()
     }
 
-    fun getAllUsers(): List<User> = registeredUsers.toList()
+    fun isUserLoggedIn(): Boolean {
+        return firebaseAuth.currentUser != null
+    }
 
-    fun registerUser(user: User, password: String): Boolean {
-        return if (registeredUsers.any { it.email == user.email }) {
-            false // User already exists
-        } else {
-            registeredUsers.add(user)
-            userCredentials.toMutableMap()[user.email] = password
-            true
+    fun getCurrentUserId(): String? {
+        return firebaseAuth.currentUser?.uid
+    }
+
+    private fun getFirebaseErrorMessage(exception: Exception): String {
+        return when (exception.message) {
+            "The email address is badly formatted." -> "Invalid email format"
+            "There is no user record corresponding to this identifier. The user may have been deleted." -> "User not found"
+            "The password is invalid or the user does not have a password." -> "Invalid password"
+            "A network error (such as timeout, interrupted connection or unreachable host) has occurred." -> "Network error. Please check your connection"
+            else -> "Login failed: ${exception.message}"
         }
     }
+
+    // removed methods
+    // - getAllUsers()
+    // - registerUser()
+    // - userCredentials map
+    // - registeredUsers list
 }

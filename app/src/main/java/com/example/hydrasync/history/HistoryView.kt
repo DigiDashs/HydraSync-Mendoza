@@ -14,3 +14,4 @@ interface HistoryView {
     fun showEditDialog(entry: DrinkEntry)
     fun showDeleteConfirmation(entry: DrinkEntry)
 }
+

@@ -1,13 +1,11 @@
 package com.example.hydrasync.register
 
-import com.example.hydrasync.login.LoginRepository
 import com.example.hydrasync.login.User
 import kotlinx.coroutines.*
-import java.util.*
 
 class RegisterPresenter(private var view: RegisterContract.View?) : RegisterContract.Presenter {
 
-    private val repository = LoginRepository.getInstance()
+    private val repository = RegisterRepository.getInstance()
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     override fun register(firstName: String, lastName: String, email: String, password: String) {
@@ -57,24 +55,17 @@ class RegisterPresenter(private var view: RegisterContract.View?) : RegisterCont
 
         scope.launch {
             try {
-                val success = withContext(Dispatchers.IO) {
-                    val newUser = User(
-                        id = UUID.randomUUID().toString(),
-                        email = email,
-                        firstName = firstName,
-                        lastName = lastName
-                    )
-                    Thread.sleep(1500) // Simulate network delay
-                    repository.registerUser(newUser, password)
+                val response = withContext(Dispatchers.IO) {
+                    repository.register(firstName, lastName, email, password)
                 }
 
                 view?.showLoading(false)
 
-                if (success) {
+                if (response.isSuccess) {
                     view?.showRegistrationSuccess()
                     view?.navigateToLogin()
                 } else {
-                    view?.showRegistrationError("User with this email already exists")
+                    view?.showRegistrationError(response.message)
                 }
             } catch (e: Exception) {
                 view?.showLoading(false)
