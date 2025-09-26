@@ -1,28 +1,69 @@
 package com.example.hydrasync.history
 
+import com.example.hydrasync.data.WaterIntakeRepository
+
 class HistoryPresenter(private val view: HistoryView) {
 
+    private val repository = WaterIntakeRepository.getInstance()
+
     fun loadDrinkHistory() {
-        // This is a simulated data fetch. In a real app, this would be from a database or API.
-        val historyData = listOf(
-            DrinkEntry("02:30 PM", "500 ML", "Today"),
-            DrinkEntry("08:30 PM", "350 ML", "Yesterday"),
-            DrinkEntry("12:00 PM", "200 ML", "Yesterday"),
-            DrinkEntry("10:30 AM", "300 ML", "Yesterday"),
-            DrinkEntry("08:00 AM", "450 ML", "Yesterday")
-        )
+        view.showLoadingState(true)
 
-        // Separate data into lists for "Today" and "Yesterday"
-        val todayList = historyData.filter { it.date == "Today" }
-        val yesterdayList = historyData.filter { it.date == "Yesterday" }
+        try {
+            // Add sample data for testing
+            repository.addSampleData()
 
-        // Calculate totals. Note: A more robust app would parse this with better error handling.
-        val todayTotal = todayList.sumOf { it.amount.replace(" ML", "").toInt() } / 1000.0
-        val yesterdayTotal = yesterdayList.sumOf { it.amount.replace(" ML", "").toInt() } / 1000.0
+            val allEntries = repository.getAllEntries()
 
-        // Call the view's methods to update the UI with the processed data
-        view.setTodayTotal(String.format("%.1f", todayTotal))
-        view.setYesterdayTotal(String.format("%.1f", yesterdayTotal))
-        view.showHistory(historyData)
+            if (allEntries.isEmpty()) {
+                view.showEmptyState(true)
+                view.showLoadingState(false)
+                return
+            }
+
+            val todayEntries = repository.getTodayEntries()
+            val yesterdayEntries = repository.getYesterdayEntries()
+
+            val todayTotal = repository.getTodayTotalIntake()
+            val yesterdayTotal = repository.getTotalIntakeForDate("Yesterday")
+
+            view.showTodayHistory(todayEntries)
+            view.showYesterdayHistory(yesterdayEntries)
+            view.setTodayTotal(todayTotal)
+            view.setYesterdayTotal(yesterdayTotal)
+            view.showEmptyState(false)
+
+        } catch (e: Exception) {
+            view.showError("Failed to load history: ${e.message}")
+        } finally {
+            view.showLoadingState(false)
+        }
+    }
+
+    // Interactive features
+    fun deleteEntry(entry: DrinkEntry) {
+        if (repository.deleteEntry(entry)) {
+            view.showToast("Entry deleted")
+            loadDrinkHistory() // Refresh the view
+        } else {
+            view.showError("Failed to delete entry")
+        }
+    }
+
+    fun editEntry(oldEntry: DrinkEntry, newAmount: Int) {
+        val updatedEntry = repository.updateEntry(oldEntry, newAmount)
+        if (updatedEntry != null) {
+            view.showToast("Entry updated")
+            loadDrinkHistory() // Refresh the view
+        } else {
+            view.showError("Failed to update entry")
+        }
+    }
+
+    fun formatTotal(totalMl: Int): String {
+        return when {
+            totalMl >= 1000 -> String.format("%.1f L", totalMl / 1000.0)
+            else -> "$totalMl mL"
+        }
     }
 }
