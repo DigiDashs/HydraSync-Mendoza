@@ -133,11 +133,11 @@ class WaterIntakeRepository private constructor() {
         if (drinkEntries.isEmpty()) {
             // Add sample entries
             drinkEntries.addAll(listOf(
-                DrinkEntry("02:30 PM", "250 ML", "Today"),
-                DrinkEntry("12:15 PM", "500 ML", "Today"),
-                DrinkEntry("09:45 PM", "300 ML", "Yesterday"),
-                DrinkEntry("03:20 PM", "500 ML", "Yesterday"),
-                DrinkEntry("10:30 AM", "350 ML", "Yesterday")
+//                DrinkEntry("02:30 PM", "250 ML", "Today"),
+//                DrinkEntry("12:15 PM", "500 ML", "Today"),
+//                DrinkEntry("09:45 PM", "300 ML", "Yesterday"),
+//                DrinkEntry("03:20 PM", "500 ML", "Yesterday"),
+//                DrinkEntry("10:30 AM", "350 ML", "Yesterday")
             ))
         }
     }
