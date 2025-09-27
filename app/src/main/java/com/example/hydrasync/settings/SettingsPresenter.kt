@@ -1,5 +1,6 @@
 package com.example.hydrasync.settings
 
+import com.example.hydrasync.alerts.InactivityManager
 import com.example.hydrasync.settings.data.SettingsData
 
 class SettingsPresenter(
@@ -88,7 +89,22 @@ class SettingsPresenter(
             if (success) {
                 settingsData = settingsData?.copy(inactivityAlertMinutes = minutes)
                 view.updateInactivityAlert(minutes)
-                view.showToast("Inactivity alert updated successfully")
+
+                val context = (view as? android.content.Context)
+                context?.let {
+                    val manager = InactivityManager(it)
+                    manager.cancelInactivityCheck() // Always cancel previous alarms
+
+                    if (minutes > 0) {
+                        // Convert minutes to milliseconds interval for scheduling
+                        manager.scheduleInactivityCheck(minutes)
+                    }
+                }
+
+                view.showToast(
+                    if (minutes == 0) "Inactivity alerts disabled"
+                    else "Inactivity alert updated successfully"
+                )
             } else {
                 view.showToast("Failed to update inactivity alert")
             }
@@ -96,6 +112,7 @@ class SettingsPresenter(
             view.showToast("Error updating inactivity alert")
         }
     }
+
 
     override fun updateQuietHours(startTime: String, endTime: String) {
         try {
