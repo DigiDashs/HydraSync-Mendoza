@@ -8,7 +8,7 @@ class RegisterPresenter(private var view: RegisterContract.View?) : RegisterCont
     private val repository = RegisterRepository.getInstance()
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
-    override fun register(firstName: String, lastName: String, email: String, password: String) {
+    override fun register(firstName: String, lastName: String, email: String, password: String, dob: String, gender: String) {
         view?.clearErrors()
 
         var hasError = false
@@ -46,6 +46,17 @@ class RegisterPresenter(private var view: RegisterContract.View?) : RegisterCont
             hasError = true
         } else if (password.length < 6) {
             view?.showPasswordError("Password must be at least 6 characters")
+            hasError = true
+        }
+
+        if (dob.isBlank()) {
+            // For now just Toast, since no tilDob error function exists
+            view?.showRegistrationError("Date of birth is required")
+            hasError = true
+        }
+
+        if (gender.isBlank()) {
+            view?.showRegistrationError("Gender is required")
             hasError = true
         }
 

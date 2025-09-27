@@ -61,7 +61,9 @@
         android:layout_weight="1"
         android:fillViewport="true">
 
+        <!-- Added ID for programmatic access -->
         <LinearLayout
+            android:id="@+id/scrollContentLinearLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
@@ -87,6 +89,7 @@
                 android:textColor="@android:color/darker_gray"
                 android:layout_marginBottom="16dp" />
 
+            <!-- Profile Item -->
             <LinearLayout
                 android:id="@+id/profileItem"
                 android:layout_width="match_parent"
@@ -134,6 +137,7 @@
                 android:textColor="@android:color/darker_gray"
                 android:layout_marginBottom="16dp" />
 
+            <!-- Daily Goal Item -->
             <LinearLayout
                 android:id="@+id/dailyGoalItem"
                 android:layout_width="match_parent"
@@ -190,6 +194,7 @@
                 android:textColor="@android:color/darker_gray"
                 android:layout_marginBottom="16dp" />
 
+            <!-- Inactivity Alert -->
             <LinearLayout
                 android:id="@+id/inactivityAlertItem"
                 android:layout_width="match_parent"
@@ -236,6 +241,7 @@
 
             </LinearLayout>
 
+            <!-- Quiet Hours -->
             <LinearLayout
                 android:id="@+id/quietHoursItem"
                 android:layout_width="match_parent"
