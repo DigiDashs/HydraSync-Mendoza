@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
@@ -26,12 +27,14 @@ class RegisterActivity : AppCompatActivity(), RegisterContract.View {
     private lateinit var tilPassword: TextInputLayout
     private lateinit var tilGender: TextInputLayout
     private lateinit var tilBirthday: TextInputLayout
+
     private lateinit var etFirstName: TextInputEditText
     private lateinit var etLastName: TextInputEditText
     private lateinit var etEmail: TextInputEditText
     private lateinit var etPassword: TextInputEditText
     private lateinit var etBirthday: TextInputEditText
-    private lateinit var spinnerGender: android.widget.Spinner
+    private lateinit var etGender: AutoCompleteTextView
+
     private lateinit var btnRegister: MaterialButton
     private lateinit var tvLogin: TextView
     private lateinit var progressBar: ProgressBar
@@ -46,7 +49,7 @@ class RegisterActivity : AppCompatActivity(), RegisterContract.View {
 
         initViews()
         presenter = RegisterPresenter(this)
-        setupGenderSpinner()
+        setupGenderDropdown()
         setupDatePicker()
         setupClickListeners()
     }
@@ -58,25 +61,33 @@ class RegisterActivity : AppCompatActivity(), RegisterContract.View {
         tilPassword = findViewById(R.id.tilPassword)
         tilGender = findViewById(R.id.tilGender)
         tilBirthday = findViewById(R.id.tilBirthday)
+
         etFirstName = findViewById(R.id.etFirstName)
         etLastName = findViewById(R.id.etLastName)
         etEmail = findViewById(R.id.etEmail)
         etPassword = findViewById(R.id.etPassword)
         etBirthday = findViewById(R.id.etBirthday)
-        spinnerGender = findViewById(R.id.spinnerGender)
+        etGender = findViewById(R.id.etGender)
+
         btnRegister = findViewById(R.id.btnRegister)
         tvLogin = findViewById(R.id.tvLogin)
         progressBar = findViewById(R.id.progressBar)
     }
 
-    private fun setupGenderSpinner() {
-        val genderAdapter = ArrayAdapter.createFromResource(
+    private fun setupGenderDropdown() {
+        val genderOptions = arrayOf("Select Gender", "Male", "Female", "Other", "Prefer not to say")
+        val genderAdapter = ArrayAdapter(
             this,
-            R.array.gender_options,
-            android.R.layout.simple_spinner_item
+            android.R.layout.simple_dropdown_item_1line,
+            genderOptions
         )
-        genderAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinnerGender.adapter = genderAdapter
+        etGender.setAdapter(genderAdapter)
+
+        // Disable keyboard, force dropdown only
+        etGender.keyListener = null
+        etGender.setOnClickListener {
+            etGender.showDropDown()
+        }
     }
 
     private fun setupDatePicker() {
@@ -110,7 +121,7 @@ class RegisterActivity : AppCompatActivity(), RegisterContract.View {
             val lastName = etLastName.text.toString().trim()
             val email = etEmail.text.toString().trim()
             val password = etPassword.text.toString().trim()
-            val gender = spinnerGender.selectedItem.toString()
+            val gender = etGender.text.toString().trim()
             val birthday = etBirthday.text.toString().trim()
 
             presenter.register(firstName, lastName, email, password, gender, birthday)
@@ -137,11 +148,11 @@ class RegisterActivity : AppCompatActivity(), RegisterContract.View {
         tilPassword.error = error
     }
 
-    override fun showGenderError(error: String) {        // Add this
+    override fun showGenderError(error: String) {
         tilGender.error = error
     }
 
-    override fun showBirthdayError(error: String) {      // Add this
+    override fun showBirthdayError(error: String) {
         tilBirthday.error = error
     }
 

@@ -67,21 +67,21 @@
                     android:padding="16dp"
                     app:tint="#1e5a8a" />
 
+                <!-- REMOVE android:text="John Doe" -->
                 <TextView
                     android:id="@+id/tvUserName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="John Doe"
                     android:textColor="@android:color/black"
                     android:textSize="20sp"
                     android:textStyle="bold"
                     android:layout_marginTop="12dp" />
 
+                <!-- REMOVE android:text="johndoe@email.com" -->
                 <TextView
                     android:id="@+id/tvUserEmail"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="johndoe@email.com"
                     android:textColor="@android:color/darker_gray"
                     android:textSize="14sp"
                     android:layout_marginTop="4dp" />
@@ -135,12 +135,12 @@
                 android:textSize="14sp"
                 android:layout_marginBottom="4dp" />
 
+            <!-- REMOVE android:text="johndoe@email.com" -->
             <EditText
                 android:id="@+id/etEmail"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:hint="Enter your email"
-                android:text="johndoe@email.com"
                 android:inputType="textEmailAddress"
                 android:background="@android:drawable/edit_text"
                 android:padding="12dp"
@@ -167,7 +167,6 @@
                 android:layout_marginBottom="16dp" />
 
             <!-- Birthday -->
-            <!-- Birthday -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -176,7 +175,6 @@
                 android:textSize="14sp"
                 android:layout_marginBottom="4dp" />
 
-            <!-- Replace the EditText with this Material Design text field -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilBirthday"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -197,7 +195,6 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
-
             <!-- Save Button -->
             <Button
                 android:id="@+id/btnSaveProfile"
@@ -209,7 +206,6 @@
                 android:textStyle="bold"
                 android:background="#1e5a8a"
                 android:gravity="center"/>
-
 
         </LinearLayout>
     </ScrollView>

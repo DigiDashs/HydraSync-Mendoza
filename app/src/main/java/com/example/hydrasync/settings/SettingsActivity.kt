@@ -1,8 +1,13 @@
 package com.example.hydrasync.settings
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.widget.Button
+import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -11,32 +16,26 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.hydrasync.R
 import com.example.hydrasync.home.HomeActivity
 import com.example.hydrasync.login.LoginActivity
-//import com.example.hydrasync.profile.ProfileActivity
 import com.example.hydrasync.settings.data.SettingsData
 import com.example.hydrasync.history.HistoryActivity
 import com.example.hydrasync.profile.ProfileActivity
 
-
 class SettingsActivity : AppCompatActivity(), SettingsContract.View {
 
-    // UI Components
     private lateinit var profileItem: LinearLayout
     private lateinit var dailyGoalItem: LinearLayout
     private lateinit var inactivityAlertItem: LinearLayout
     private lateinit var quietHoursItem: LinearLayout
     private lateinit var btnLogout: Button
 
-    // Text views for displaying current values
     private lateinit var tvDailyGoalValue: TextView
     private lateinit var tvInactivityAlertValue: TextView
     private lateinit var tvQuietHoursValue: TextView
 
-    // Navigation tabs
     private lateinit var tabHistory: LinearLayout
     private lateinit var tabHome: LinearLayout
     private lateinit var tabSettings: LinearLayout
 
-    // Presenter
     private lateinit var presenter: SettingsPresenter
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,43 +46,51 @@ class SettingsActivity : AppCompatActivity(), SettingsContract.View {
         presenter = SettingsPresenter(this)
         setupClickListeners()
 
+        createNotificationChannel()
         presenter.loadSettingsData()
     }
 
     private fun initViews() {
-        // Settings items
         profileItem = findViewById(R.id.profileItem)
         dailyGoalItem = findViewById(R.id.dailyGoalItem)
         inactivityAlertItem = findViewById(R.id.inactivityAlertItem)
         quietHoursItem = findViewById(R.id.quietHoursItem)
         btnLogout = findViewById(R.id.btnLogout)
 
-        // Value text views (you'll need to add IDs to these in your XML)
-        tvDailyGoalValue = dailyGoalItem.findViewById<TextView>(R.id.tvDailyGoalValue) // Add this ID to XML
-        tvInactivityAlertValue = inactivityAlertItem.findViewById<TextView>(R.id.tvInactivityAlertValue) // Add this ID to XML
-        tvQuietHoursValue = quietHoursItem.findViewById<TextView>(R.id.tvQuietHoursValue) // Add this ID to XML
+        tvDailyGoalValue = dailyGoalItem.findViewById(R.id.tvDailyGoalValue)
+        tvInactivityAlertValue = inactivityAlertItem.findViewById(R.id.tvInactivityAlertValue)
+        tvQuietHoursValue = quietHoursItem.findViewById(R.id.tvQuietHoursValue)
 
-        // Bottom navigation
         tabHistory = findViewById(R.id.tabHistory)
         tabHome = findViewById(R.id.tabHome)
         tabSettings = findViewById(R.id.tabSettings)
     }
 
     private fun setupClickListeners() {
-        // Settings items click listeners
         profileItem.setOnClickListener { presenter.onProfileClicked() }
         dailyGoalItem.setOnClickListener { presenter.onDailyGoalClicked() }
         inactivityAlertItem.setOnClickListener { presenter.onInactivityAlertClicked() }
         quietHoursItem.setOnClickListener { presenter.onQuietHoursClicked() }
         btnLogout.setOnClickListener { presenter.onLogoutClicked() }
 
-        // Bottom navigation click listeners
         tabHistory.setOnClickListener { presenter.onHistoryClicked() }
         tabHome.setOnClickListener { presenter.onHomeClicked() }
         tabSettings.setOnClickListener { /* Already on settings */ }
     }
 
-    // Contract implementation
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                "inactivity_channel",
+                "Inactivity Alerts",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply { description = "Reminders when you are inactive" }
+
+            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            manager.createNotificationChannel(channel)
+        }
+    }
+
     override fun displaySettingsData(settingsData: SettingsData) {
         tvDailyGoalValue.text = settingsData.getDailyGoalText()
         tvInactivityAlertValue.text = settingsData.getInactivityAlertText()
@@ -95,7 +102,7 @@ class SettingsActivity : AppCompatActivity(), SettingsContract.View {
     }
 
     override fun updateInactivityAlert(minutes: Int) {
-        tvInactivityAlertValue.text = "$minutes mins"
+        tvInactivityAlertValue.text = if (minutes == 0) "No Alerts" else "$minutes mins"
     }
 
     override fun updateQuietHours(startTime: String, endTime: String) {
@@ -107,11 +114,10 @@ class SettingsActivity : AppCompatActivity(), SettingsContract.View {
         val goalValues = intArrayOf(1500, 2000, 2500, 3000, -1)
 
         AlertDialog.Builder(this)
-            .setTitle("Select Daily Goal")
+            .setTitle("Select Daily Goal\nCurrent: $currentGoal mL ")
             .setItems(goals) { _, which ->
-                if (goalValues[which] == -1) {
-                    // TODO: Show custom input dialog
-                    showToast("Custom goal input coming soon!")
+                if (which == goals.size - 1) {
+                    showCustomGoalDialog()
                 } else {
                     presenter.updateDailyGoal(goalValues[which])
                 }
@@ -120,9 +126,35 @@ class SettingsActivity : AppCompatActivity(), SettingsContract.View {
             .show()
     }
 
+    private fun showCustomGoalDialog() {
+        val input = EditText(this).apply {
+            hint = "Enter goal (500-5000 mL)"
+            inputType = android.text.InputType.TYPE_CLASS_NUMBER
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("Custom Daily Goal")
+            .setMessage("Recommended: 2000 mL\nMin: 500 mL | Max: 5000 mL")
+            .setView(input)
+            .setPositiveButton("Set") { _, _ ->
+                val customGoal = input.text.toString().toIntOrNull()
+                if (customGoal != null) {
+                    if (customGoal in 500..5000) {
+                        presenter.updateDailyGoal(customGoal)
+                    } else {
+                        showToast("Please enter a value between 500 and 5000 mL")
+                    }
+                } else {
+                    showToast("Please enter a valid number")
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
     override fun showInactivityAlertDialog(currentMinutes: Int) {
-        val intervals = arrayOf("30 minutes", "60 minutes", "90 minutes", "120 minutes")
-        val intervalValues = intArrayOf(30, 60, 90, 120)
+        val intervals = arrayOf("No Alerts", "30 minutes", "60 minutes", "90 minutes", "120 minutes")
+        val intervalValues = intArrayOf(0, 30, 60, 90, 120)
 
         AlertDialog.Builder(this)
             .setTitle("Select Inactivity Alert")
@@ -167,18 +199,16 @@ class SettingsActivity : AppCompatActivity(), SettingsContract.View {
     }
 
     override fun navigateToProfile() {
-        val intent = Intent(this, ProfileActivity::class.java)
-        startActivity(intent)
+        startActivity(Intent(this, ProfileActivity::class.java))
     }
 
     override fun navigateToHome() {
-        val intent = Intent(this, HomeActivity::class.java)
-        startActivity(intent)
+        startActivity(Intent(this, HomeActivity::class.java))
+        finish() // Finish settings so Home refreshes
     }
 
     override fun navigateToHistory() {
-        val intent = Intent(this, HistoryActivity::class.java)
-        startActivity(intent)
+        startActivity(Intent(this, HistoryActivity::class.java))
     }
 
     override fun showToast(message: String) {

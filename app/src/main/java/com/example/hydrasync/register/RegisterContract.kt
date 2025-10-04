@@ -17,6 +17,7 @@ interface RegisterContract {
 
     interface Presenter {
         fun register(firstName: String, lastName: String, email: String, password: String, gender: String, birthday: String)
+
         fun onBackToLoginClicked()
         fun onDestroy()
     }

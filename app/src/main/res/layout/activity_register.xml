@@ -1,41 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
+    android:fillViewport="true"
     android:background="@color/white">
 
-    <!-- Header -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="120dp"
-        android:background="@color/hydra_blue"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingHorizontal="20dp">
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
-        <ImageView
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:src="@drawable/ic_launcher_foreground"
-            android:layout_marginEnd="12dp" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
+            android:background="@color/hydra_blue"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="20dp">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="HydraSync"
-            android:textColor="@color/white"
-            android:textSize="24sp"
-            android:textStyle="bold" />
+            <ImageView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@drawable/ic_launcher_foreground"
+                android:layout_marginEnd="12dp" />
 
-    </LinearLayout>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="HydraSync"
+                android:textColor="@color/white"
+                android:textSize="24sp"
+                android:textStyle="bold" />
 
-    <!-- Content -->
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fillViewport="true">
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -66,7 +64,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="textPersonName" />
-
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -82,7 +79,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="textPersonName" />
-
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -98,7 +94,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="textEmailAddress" />
-
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -106,7 +101,7 @@
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="32dp"
+                android:layout_marginBottom="16dp"
                 android:hint="Password"
                 app:passwordToggleEnabled="true">
 
@@ -115,23 +110,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="textPassword" />
-
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/tilGender"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:hint="Gender">
-
-                <androidx.appcompat.widget.AppCompatSpinner
-                    android:id="@+id/spinnerGender"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:entries="@array/gender_options" />
-
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -140,16 +118,32 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                android:hint="Birthday">
+                android:hint="Birthday (MM/DD/YYYY)">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etBirthday"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="date"
+                    android:inputType="none"
                     android:focusable="false"
                     android:clickable="true" />
+            </com.google.android.material.textfield.TextInputLayout>
 
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilGender"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="32dp"
+                android:hint="Gender">
+
+                <androidx.appcompat.widget.AppCompatAutoCompleteTextView
+                    android:id="@+id/etGender"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="none"
+                    android:text="Select Gender" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.button.MaterialButton
@@ -181,6 +175,6 @@
 
         </LinearLayout>
 
-    </ScrollView>
+    </LinearLayout>
 
-</LinearLayout>
+</ScrollView>

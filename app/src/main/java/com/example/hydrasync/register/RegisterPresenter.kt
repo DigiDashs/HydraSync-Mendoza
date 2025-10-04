@@ -1,7 +1,6 @@
 package com.example.hydrasync.register
 
 import android.util.Log
-import com.example.hydrasync.login.User
 import kotlinx.coroutines.*
 
 class RegisterPresenter(private var view: RegisterContract.View?) : RegisterContract.Presenter {
@@ -62,10 +61,6 @@ class RegisterPresenter(private var view: RegisterContract.View?) : RegisterCont
             view?.showBirthdayError("Birthday is required")
             hasError = true
         }
-
-        if (hasError) return
-
-        view?.showLoading(true)
 
         if (hasError) {
             Log.d("RegisterPresenter", "Validation failed, returning")

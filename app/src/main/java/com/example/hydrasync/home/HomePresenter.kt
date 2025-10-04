@@ -2,41 +2,67 @@ package com.example.hydrasync.home
 
 import com.example.hydrasync.data.WaterIntakeRepository
 import com.example.hydrasync.login.LoginRepository
+import com.example.hydrasync.settings.SettingsRepository
 import kotlinx.coroutines.*
 
 class HomePresenter(private var view: HomeContract.View?) : HomeContract.Presenter {
 
     private val loginRepository = LoginRepository.getInstance()
     private val waterRepository = WaterIntakeRepository.getInstance()
+    private val settingsRepository = SettingsRepository()
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var hasShownGoalAchievement = false
 
     override fun loadHomeData() {
-        val currentUser = loginRepository.getCurrentUser()
+        scope.launch {
+            val currentUser = loginRepository.getCurrentUser()
 
-        if (currentUser != null) {
-            // Add sample data for testing
-            waterRepository.addSampleData()
+            if (currentUser != null) {
+                try {
+                    // Load daily goal from Firebase
+                    val dailyGoal = withContext(Dispatchers.IO) {
+                        settingsRepository.getDailyGoal()
+                    }
 
-            val waterIntake = waterRepository.getCurrentWaterIntake()
-            val homeData = HomeData(
-                user = currentUser,
-                waterIntake = waterIntake,
-                isConnected = true
-            )
-            view?.displayHomeData(homeData)
-            view?.updateWaterProgress(waterIntake)
-            updateProgressView()
-        } else {
-            view?.navigateToLogin()
+                    // Update repository with the goal
+                    waterRepository.setDailyGoal(dailyGoal)
+
+                    // Add sample data for testing (only if empty)
+                    waterRepository.addSampleData()
+
+                    val waterIntake = waterRepository.getCurrentWaterIntake()
+                    val homeData = HomeData(
+                        user = currentUser,
+                        waterIntake = waterIntake,
+                        isConnected = true,
+                        goalAchievedToday = waterIntake.isGoalAchieved()
+                    )
+
+                    view?.displayHomeData(homeData)
+                    view?.updateWaterProgress(waterIntake)
+                    updateProgressView()
+
+                } catch (e: Exception) {
+                    // Handle error - use default goal
+                    view?.showToast("Error loading settings, using default goal")
+                    val waterIntake = waterRepository.getCurrentWaterIntake()
+                    val homeData = HomeData(
+                        user = currentUser,
+                        waterIntake = waterIntake,
+                        isConnected = true,
+                        goalAchievedToday = waterIntake.isGoalAchieved()
+                    )
+                    view?.displayHomeData(homeData)
+                    view?.updateWaterProgress(waterIntake)
+                    updateProgressView()
+                }
+            } else {
+                view?.navigateToLogin()
+            }
         }
     }
 
     override fun onAddIntakeClicked() {
-        val currentIntake = waterRepository.getCurrentWaterIntake()
-        if (currentIntake.isGoalAchieved() && !hasShownGoalAchievement) {
-            view?.showToast("Daily goal already achieved! Great job!")
-        }
         view?.showAddIntakeDialog()
     }
 
@@ -44,33 +70,29 @@ class HomePresenter(private var view: HomeContract.View?) : HomeContract.Present
         val currentIntake = waterRepository.getCurrentWaterIntake()
         val wasGoalAchieved = currentIntake.isGoalAchieved()
 
-        // Add to repository (this will be reflected in History automatically)
+        // Add to repository - continue recording even if goal is achieved
         waterRepository.addDrinkEntry(amount)
 
         // Get updated intake status
         val updatedIntake = waterRepository.getCurrentWaterIntake()
 
-        // Check if goal was just achieved
+        // Check if goal was JUST achieved (one-time trigger)
         if (!wasGoalAchieved && updatedIntake.isGoalAchieved() && !hasShownGoalAchievement) {
             view?.showGoalAchieved()
             hasShownGoalAchievement = true
+            // TODO: Disable reminders for the day
         }
 
         view?.updateWaterProgress(updatedIntake)
         updateProgressView()
+
+        view?.showToast("Added ${amount}ml - ${updatedIntake.getStatusText()}")
     }
 
     override fun setDailyGoal(goal: Int) {
-        if (goal < 500 || goal > 5000) {
-            view?.showError("Daily goal should be between 500ml and 5000ml")
-            return
-        }
-
-        waterRepository.setDailyGoal(goal)
-        val updatedIntake = waterRepository.getCurrentWaterIntake()
-        view?.updateWaterProgress(updatedIntake)
-        updateProgressView()
-        view?.showToast("Daily goal updated to ${goal}ml")
+        // This method is now handled by Settings
+        // Removed to prevent conflicts
+        view?.showToast("Please use Settings to change your daily goal")
     }
 
     override fun resetDailyProgress() {
@@ -79,7 +101,7 @@ class HomePresenter(private var view: HomeContract.View?) : HomeContract.Present
         val updatedIntake = waterRepository.getCurrentWaterIntake()
         view?.updateWaterProgress(updatedIntake)
         updateProgressView()
-        view?.showToast("Daily progress reset")
+        view?.showToast("Daily progress reset - new day started!")
     }
 
     private fun updateProgressView() {
