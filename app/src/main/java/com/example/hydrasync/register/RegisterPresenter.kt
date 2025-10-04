@@ -1,5 +1,6 @@
 package com.example.hydrasync.register
 
+import android.util.Log
 import com.example.hydrasync.login.User
 import kotlinx.coroutines.*
 
@@ -8,7 +9,8 @@ class RegisterPresenter(private var view: RegisterContract.View?) : RegisterCont
     private val repository = RegisterRepository.getInstance()
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
-    override fun register(firstName: String, lastName: String, email: String, password: String) {
+    override fun register(firstName: String, lastName: String, email: String, password: String, gender: String, birthday: String) {
+        Log.d("RegisterPresenter", "=== REGISTER STARTED ===")
         view?.clearErrors()
 
         var hasError = false
@@ -49,25 +51,52 @@ class RegisterPresenter(private var view: RegisterContract.View?) : RegisterCont
             hasError = true
         }
 
+        // Gender validation
+        if (gender == "Select Gender" || gender.isBlank()) {
+            view?.showGenderError("Please select your gender")
+            hasError = true
+        }
+
+        // Birthday validation
+        if (birthday.isBlank()) {
+            view?.showBirthdayError("Birthday is required")
+            hasError = true
+        }
+
         if (hasError) return
 
         view?.showLoading(true)
 
+        if (hasError) {
+            Log.d("RegisterPresenter", "Validation failed, returning")
+            return
+        }
+
+        view?.showLoading(true)
+        Log.d("RegisterPresenter", "Loading shown, starting coroutine")
+
         scope.launch {
             try {
+                Log.d("RegisterPresenter", "Coroutine launched")
                 val response = withContext(Dispatchers.IO) {
-                    repository.register(firstName, lastName, email, password)
+                    Log.d("RegisterPresenter", "Calling repository.register()")
+                    repository.register(firstName, lastName, email, password, gender, birthday)
                 }
 
+                Log.d("RegisterPresenter", "Repository returned: ${response.isSuccess}")
                 view?.showLoading(false)
 
                 if (response.isSuccess) {
+                    Log.d("RegisterPresenter", "SUCCESS - showing success message")
                     view?.showRegistrationSuccess()
+                    Log.d("RegisterPresenter", "SUCCESS - navigating to login")
                     view?.navigateToLogin()
                 } else {
+                    Log.d("RegisterPresenter", "FAILED: ${response.message}")
                     view?.showRegistrationError(response.message)
                 }
             } catch (e: Exception) {
+                Log.e("RegisterPresenter", "EXCEPTION: ${e.message}", e)
                 view?.showLoading(false)
                 view?.showRegistrationError("Registration failed. Please try again.")
             }

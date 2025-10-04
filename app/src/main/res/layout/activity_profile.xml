@@ -92,17 +92,35 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Name"
+                android:text="First Name"
                 android:textColor="@android:color/darker_gray"
                 android:textSize="14sp"
                 android:layout_marginBottom="4dp" />
 
             <EditText
-                android:id="@+id/etName"
+                android:id="@+id/etFirstName"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
-                android:hint="Enter your name"
-                android:text="John Doe"
+                android:hint="Enter first name"
+                android:background="@android:drawable/edit_text"
+                android:padding="12dp"
+                android:textColor="@android:color/black"
+                android:textSize="16sp"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Last Name"
+                android:textColor="@android:color/darker_gray"
+                android:textSize="14sp"
+                android:layout_marginBottom="4dp" />
+
+            <EditText
+                android:id="@+id/etLastName"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:hint="Enter last name"
                 android:background="@android:drawable/edit_text"
                 android:padding="12dp"
                 android:textColor="@android:color/black"
@@ -149,6 +167,7 @@
                 android:layout_marginBottom="16dp" />
 
             <!-- Birthday -->
+            <!-- Birthday -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -157,17 +176,26 @@
                 android:textSize="14sp"
                 android:layout_marginBottom="4dp" />
 
-            <EditText
-                android:id="@+id/etBirthday"
+            <!-- Replace the EditText with this Material Design text field -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilBirthday"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:hint="MM/DD/YYYY"
-                android:inputType="date"
-                android:background="@android:drawable/edit_text"
-                android:padding="12dp"
-                android:textColor="@android:color/black"
-                android:textSize="16sp"
-                android:layout_marginBottom="32dp" />
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="32dp"
+                android:hint="MM/DD/YYYY">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etBirthday"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:focusable="false"
+                    android:clickable="true"
+                    android:cursorVisible="false"
+                    android:textColor="@android:color/black"
+                    android:textSize="16sp" />
+
+            </com.google.android.material.textfield.TextInputLayout>
 
 
             <!-- Save Button -->
