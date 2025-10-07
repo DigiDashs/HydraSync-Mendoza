@@ -1,23 +1,37 @@
 package com.example.hydrasync.settings
 
+import android.widget.EditText
+import androidx.appcompat.app.AlertDialog
 import com.example.hydrasync.alerts.InactivityManager
 import com.example.hydrasync.settings.data.SettingsData
+import kotlinx.coroutines.*
 
 class SettingsPresenter(
     private val view: SettingsContract.View,
-    private val repository: SettingsContract.Repository = SettingsRepository()
+    private val repository: SettingsRepository = SettingsRepository()
 ) : SettingsContract.Presenter {
 
     private var settingsData: SettingsData? = null
+    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+
+    companion object {
+        const val MIN_GOAL = 500
+        const val MAX_GOAL = 5000
+        const val DEFAULT_GOAL = 2000
+    }
 
     override fun loadSettingsData() {
-        try {
-            settingsData = repository.getSettingsData()
-            settingsData?.let { data ->
-                view.displaySettingsData(data)
+        scope.launch {
+            try {
+                settingsData = withContext(Dispatchers.IO) {
+                    repository.getSettingsDataAsync()
+                }
+                settingsData?.let { data ->
+                    view.displaySettingsData(data)
+                }
+            } catch (e: Exception) {
+                view.showToast("Error loading settings data")
             }
-        } catch (e: Exception) {
-            view.showToast("Error loading settings data")
         }
     }
 
@@ -69,17 +83,27 @@ class SettingsPresenter(
     }
 
     override fun updateDailyGoal(goalML: Int) {
-        try {
-            val success = repository.updateDailyGoal(goalML)
-            if (success) {
-                settingsData = settingsData?.copy(dailyGoalML = goalML)
-                view.updateDailyGoal(goalML)
-                view.showToast("Daily goal updated successfully")
-            } else {
-                view.showToast("Failed to update daily goal")
+        // Validate goal
+        if (goalML < MIN_GOAL || goalML > MAX_GOAL) {
+            view.showToast("Goal must be between $MIN_GOAL mL and $MAX_GOAL mL")
+            return
+        }
+
+        scope.launch {
+            try {
+                val success = withContext(Dispatchers.IO) {
+                    repository.updateDailyGoalAsync(goalML)
+                }
+                if (success) {
+                    settingsData = settingsData?.copy(dailyGoalML = goalML)
+                    view.updateDailyGoal(goalML)
+                    view.showToast("Daily goal updated to $goalML mL")
+                } else {
+                    view.showToast("Failed to update daily goal")
+                }
+            } catch (e: Exception) {
+                view.showToast("Error updating daily goal: ${e.message}")
             }
-        } catch (e: Exception) {
-            view.showToast("Error updating daily goal")
         }
     }
 
@@ -93,17 +117,16 @@ class SettingsPresenter(
                 val context = (view as? android.content.Context)
                 context?.let {
                     val manager = InactivityManager(it)
-                    manager.cancelInactivityCheck() // Always cancel previous alarms
+                    manager.cancelInactivityCheck()
 
                     if (minutes > 0) {
-                        // Convert minutes to milliseconds interval for scheduling
                         manager.scheduleInactivityCheck(minutes)
                     }
                 }
 
                 view.showToast(
                     if (minutes == 0) "Inactivity alerts disabled"
-                    else "Inactivity alert updated successfully"
+                    else "Inactivity alert updated to $minutes mins"
                 )
             } else {
                 view.showToast("Failed to update inactivity alert")
@@ -112,7 +135,6 @@ class SettingsPresenter(
             view.showToast("Error updating inactivity alert")
         }
     }
-
 
     override fun updateQuietHours(startTime: String, endTime: String) {
         try {
@@ -123,7 +145,7 @@ class SettingsPresenter(
                     quietHoursEnd = endTime
                 )
                 view.updateQuietHours(startTime, endTime)
-                view.showToast("Quiet hours updated successfully")
+                view.showToast("Quiet hours updated to $startTime-$endTime")
             } else {
                 view.showToast("Failed to update quiet hours")
             }
@@ -133,7 +155,7 @@ class SettingsPresenter(
     }
 
     override fun onDestroy() {
-        // Clean up any resources if needed
+        scope.cancel()
         settingsData = null
     }
 }
