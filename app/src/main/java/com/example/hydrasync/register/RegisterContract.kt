@@ -6,6 +6,8 @@ interface RegisterContract {
         fun showLastNameError(error: String)
         fun showEmailError(error: String)
         fun showPasswordError(error: String)
+        fun showGenderError(error: String)
+        fun showBirthdayError(error: String)
         fun clearErrors()
         fun showRegistrationSuccess()
         fun showRegistrationError(error: String)
@@ -14,7 +16,8 @@ interface RegisterContract {
     }
 
     interface Presenter {
-        fun register(firstName: String, lastName: String, email: String, password: String, dob: String, gender: String)
+        fun register(firstName: String, lastName: String, email: String, password: String, gender: String, birthday: String)
+
         fun onBackToLoginClicked()
         fun onDestroy()
     }
