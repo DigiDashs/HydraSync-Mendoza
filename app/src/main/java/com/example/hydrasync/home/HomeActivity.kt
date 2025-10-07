@@ -40,6 +40,12 @@ class HomeActivity : AppCompatActivity(), HomeContract.View {
         presenter.loadHomeData()
     }
 
+    override fun onResume() {
+        super.onResume()
+        // Reload data when returning from Settings to get updated goal
+        presenter.loadHomeData()
+    }
+
     private fun initViews() {
         tvUserName = findViewById(R.id.tvUserName)
         tvPercentage = findViewById(R.id.tvPercentage)
@@ -53,6 +59,7 @@ class HomeActivity : AppCompatActivity(), HomeContract.View {
         tabSettings = findViewById(R.id.tabSettings)
         ivProfile = findViewById(R.id.ivProfile)
         progressBar = findViewById(R.id.circularProgress)
+
     }
 
     private fun setupClickListeners() {
@@ -60,12 +67,6 @@ class HomeActivity : AppCompatActivity(), HomeContract.View {
         tabHistory.setOnClickListener { presenter.onHistoryClicked() }
         tabSettings.setOnClickListener { presenter.onSettingsClicked() }
         ivProfile.setOnClickListener { presenter.onLogoutClicked() }
-
-        // Long press on progress to set daily goal
-        progressBar.setOnLongClickListener {
-            showSetGoalDialog()
-            true
-        }
     }
 
     override fun displayHomeData(homeData: HomeData) {
@@ -88,29 +89,34 @@ class HomeActivity : AppCompatActivity(), HomeContract.View {
         tvLastDrink.text = "Last Drink: ${intake.lastDrink}"
         tvTimeAgo.text = intake.getFormattedTimeAgo()
 
-        // Set progress bar with proper max value and capped progress
+        // Set progress bar - ALWAYS capped at 100%
         progressBar.max = 100
         progressBar.progress = percentage
 
-        // Show remaining amount if goal not achieved
-        if (!intake.isGoalAchieved()) {
+        // Update button text based on goal status
+        if (intake.isGoalAchieved()) {
+            if (intake.getExceededAmount() > 0) {
+                btnAddIntake.text = "Goal Reached! +${intake.getExceededAmount()}mL extra"
+            } else {
+                btnAddIntake.text = "Goal Achieved! + Add More"
+            }
+        } else {
             val remaining = intake.getRemainingIntake()
             btnAddIntake.text = if (remaining > 0) {
                 "+ Add Intake (${remaining}ml to go)"
             } else {
                 "+ Add Intake"
             }
-        } else {
-            btnAddIntake.text = "Goal Achieved! + Add More"
         }
+
     }
 
     override fun showGoalProgress(percentage: Int, isGoalAchieved: Boolean) {
-        // Visual feedback based on goal achievement
+        // Visual feedback: change color when goal is achieved
         val color = if (isGoalAchieved) {
-            ContextCompat.getColor(this, R.color.hydra_green)
+            ContextCompat.getColor(this, R.color.hydra_green) // Green
         } else {
-            ContextCompat.getColor(this, R.color.hydra_blue)
+            ContextCompat.getColor(this, R.color.hydra_blue) // Blue
         }
 
         tvPercentage.setTextColor(color)
@@ -119,7 +125,7 @@ class HomeActivity : AppCompatActivity(), HomeContract.View {
 
     override fun showAddIntakeDialog() {
         val amounts = arrayOf("250ml", "500ml", "750ml", "1000ml", "Custom")
-        val values = intArrayOf(250, 500, 750, 1000, 0) // 0 for custom
+        val values = intArrayOf(250, 500, 750, 1000, 0)
 
         AlertDialog.Builder(this)
             .setTitle("Add Water Intake")
@@ -145,30 +151,10 @@ class HomeActivity : AppCompatActivity(), HomeContract.View {
             .setView(input)
             .setPositiveButton("Add") { _, _ ->
                 val amount = input.text.toString().toIntOrNull()
-                if (amount != null && amount > 0 && amount <= 2000) {
+                if (amount != null && amount > 0 && amount <= 5000) { // Increased max to 5000ml
                     presenter.addWaterIntake(amount)
                 } else {
-                    showError("Please enter a valid amount (1-2000ml)")
-                }
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
-    }
-
-    private fun showSetGoalDialog() {
-        val input = EditText(this).apply {
-            hint = "Enter daily goal in ml"
-            inputType = android.text.InputType.TYPE_CLASS_NUMBER
-        }
-
-        AlertDialog.Builder(this)
-            .setTitle("Set Daily Goal")
-            .setMessage("Current goal is updated")
-            .setView(input)
-            .setPositiveButton("Set") { _, _ ->
-                val goal = input.text.toString().toIntOrNull()
-                if (goal != null) {
-                    presenter.setDailyGoal(goal)
+                    showError("Please enter a valid amount (1-5000ml)")
                 }
             }
             .setNegativeButton("Cancel", null)
@@ -177,7 +163,7 @@ class HomeActivity : AppCompatActivity(), HomeContract.View {
 
     override fun showGoalAchieved() {
         AlertDialog.Builder(this)
-            .setTitle("🎉 Congratulations!")
+            .setTitle("Congratulations!")
             .setMessage("You've achieved your daily water intake goal! Great job staying hydrated!")
             .setPositiveButton("Awesome!") { _, _ -> }
             .show()

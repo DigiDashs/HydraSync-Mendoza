@@ -8,4 +8,5 @@
         <item name="colorSecondary">#4CAF50</item>
         <item name="android:statusBarColor">?attr/colorPrimary</item>
     </style>
+
 </resources>
