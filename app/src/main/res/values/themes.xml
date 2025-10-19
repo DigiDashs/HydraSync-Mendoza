@@ -8,5 +8,17 @@
         <item name="colorSecondary">#4CAF50</item>
         <item name="android:statusBarColor">?attr/colorPrimary</item>
     </style>
+     <style name="Theme.HydraSync.Splash" parent="Theme.SplashScreen">
+        <!-- Your drop.png -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/drop</item>
+        <!-- Optional background color -->
+         <item name="windowSplashScreenBackground">@color/hydra_blue</item>
+        <!-- Optional animation duration -->
+        <item name="windowSplashScreenAnimationDuration">200</item>
+        <!-- The theme that takes over after splash -->
+        <item name="postSplashScreenTheme">@style/Theme.HydraSync</item>
+    </style>
+
+
 
 </resources>
