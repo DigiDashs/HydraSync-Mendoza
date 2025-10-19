@@ -38,7 +38,7 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:layout_marginEnd="8dp"
-                android:src="@drawable/ic_launcher_foreground"
+                android:src="@drawable/drop_transparent"
                 app:tint="@android:color/white"
                 android:contentDescription="App logo" />
 
