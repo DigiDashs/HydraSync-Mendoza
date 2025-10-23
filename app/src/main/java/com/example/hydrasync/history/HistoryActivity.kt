@@ -14,14 +14,8 @@ import com.example.hydrasync.profile.ProfileActivity
 import com.example.hydrasync.settings.SettingsActivity
 
 class HistoryActivity : AppCompatActivity(), HistoryView {
-
     private lateinit var presenter: HistoryPresenter
-
-    // View references
-    private lateinit var todayHistoryContainer: LinearLayout
-    private lateinit var yesterdayHistoryContainer: LinearLayout
-    private lateinit var tvTodayTotal: TextView
-    private lateinit var tvYesterdayTotal: TextView
+    private lateinit var historyContainer: LinearLayout // Changed from todayHistoryContainer
     private lateinit var emptyStateContainer: LinearLayout
     private lateinit var progressBar: ProgressBar
 
@@ -37,15 +31,12 @@ class HistoryActivity : AppCompatActivity(), HistoryView {
 
     override fun onResume() {
         super.onResume()
-        // Refresh history when returning from Home (after adding new entries)
         presenter.loadDrinkHistory()
     }
 
     private fun initializeViews() {
-        todayHistoryContainer = findViewById(R.id.todayHistoryContainer)
-        yesterdayHistoryContainer = findViewById(R.id.yesterdayHistoryContainer)
-        tvTodayTotal = findViewById(R.id.tvTodayTotal)
-        tvYesterdayTotal = findViewById(R.id.tvYesterdayTotal)
+        // Use the new historyContainer instead of todayHistoryContainer
+        historyContainer = findViewById(R.id.historyContainer)
         emptyStateContainer = findViewById(R.id.emptyStateContainer)
 
         progressBar = ProgressBar(this).apply {
@@ -58,25 +49,27 @@ class HistoryActivity : AppCompatActivity(), HistoryView {
         presenter.loadDrinkHistory()
     }
 
-    // HistoryView interface implementations
-    override fun showTodayHistory(entries: List<DrinkEntry>) {
-        populateHistoryContainer(todayHistoryContainer, entries)
-    }
+    // Updated HistoryView implementation
+    override fun showHistoryByDate(historyByDate: Map<String, List<DrinkEntry>>) {
+        historyContainer.removeAllViews()
 
-    override fun showYesterdayHistory(entries: List<DrinkEntry>) {
-        populateHistoryContainer(yesterdayHistoryContainer, entries)
-    }
+        if (historyByDate.isEmpty()) {
+            showEmptyState(true)
+            return
+        }
 
-    override fun setTodayTotal(totalMl: Int) {
-        tvTodayTotal.text = presenter.formatTotal(totalMl)
-    }
+        showEmptyState(false)
 
-    override fun setYesterdayTotal(totalMl: Int) {
-        tvYesterdayTotal.text = presenter.formatTotal(totalMl)
+        // Create a section for each date
+        historyByDate.forEach { (date, entries) ->
+            val dateSectionView = createDateSectionView(date, entries)
+            historyContainer.addView(dateSectionView)
+        }
     }
 
     override fun showEmptyState(show: Boolean) {
         emptyStateContainer.isVisible = show
+        historyContainer.isVisible = !show
     }
 
     override fun showLoadingState(show: Boolean) {
@@ -91,8 +84,76 @@ class HistoryActivity : AppCompatActivity(), HistoryView {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
+    // Create a section for a specific date
+    private fun createDateSectionView(date: String, entries: List<DrinkEntry>): View {
+        val sectionView = LayoutInflater.from(this)
+            .inflate(R.layout.data_section_layout, null)
+
+        val tvDate = sectionView.findViewById<TextView>(R.id.tvDate)
+        val tvTotal = sectionView.findViewById<TextView>(R.id.tvTotal)
+        val entriesContainer = sectionView.findViewById<LinearLayout>(R.id.entriesContainer)
+
+        // Set date and calculate total
+        tvDate.text = date
+        val totalMl = entries.sumOf { it.amount.replace(" ML", "").toIntOrNull() ?: 0 }
+        tvTotal.text = presenter.formatTotal(totalMl)
+
+        // Populate entries
+        populateEntriesContainer(entriesContainer, entries)
+
+        return sectionView
+    }
+
+    private fun populateEntriesContainer(container: LinearLayout, entries: List<DrinkEntry>) {
+        container.removeAllViews()
+
+        entries.forEachIndexed { index, entry ->
+            val entryView = createHistoryEntryView(entry)
+            container.addView(entryView)
+
+            if (index < entries.size - 1) {
+                container.addView(createDividerView())
+            }
+        }
+    }
+
+    // Your existing methods remain the same
+    private fun createHistoryEntryView(entry: DrinkEntry): View {
+        val entryView = LayoutInflater.from(this)
+            .inflate(R.layout.item_history_entry, null)
+
+        val tvTime = entryView.findViewById<TextView>(R.id.tvTime)
+        val tvAmount = entryView.findViewById<TextView>(R.id.tvAmount)
+
+        tvTime.text = entry.time
+        tvAmount.text = entry.amount
+
+        entryView.setOnClickListener {
+            showEditDialog(entry)
+        }
+
+        entryView.setOnLongClickListener {
+            showDeleteConfirmation(entry)
+            true
+        }
+
+        return entryView
+    }
+
+    private fun createDividerView(): View {
+        return View(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                2
+            ).apply {
+                setMargins(0, 8, 0, 8)
+            }
+            setBackgroundColor(resources.getColor(android.R.color.darker_gray, theme))
+        }
+    }
+
+    // Your existing showEditDialog, showDeleteConfirmation, and navigation methods remain the same
     override fun showEditDialog(entry: DrinkEntry) {
-        // Extract the numeric amount from the string (e.g., "250 ML" -> 250)
         val currentAmount = entry.amount.replace(" ML", "").toIntOrNull() ?: 250
 
         val input = EditText(this).apply {
@@ -129,55 +190,6 @@ class HistoryActivity : AppCompatActivity(), HistoryView {
             .show()
     }
 
-    private fun populateHistoryContainer(container: LinearLayout, entries: List<DrinkEntry>) {
-        container.removeAllViews()
-
-        entries.forEachIndexed { index, entry ->
-            val entryView = createHistoryEntryView(entry)
-            container.addView(entryView)
-
-            if (index < entries.size - 1) {
-                container.addView(createDividerView())
-            }
-        }
-    }
-
-    private fun createHistoryEntryView(entry: DrinkEntry): View {
-        val entryView = LayoutInflater.from(this)
-            .inflate(R.layout.item_history_entry, null)
-
-        val tvTime = entryView.findViewById<TextView>(R.id.tvTime)
-        val tvAmount = entryView.findViewById<TextView>(R.id.tvAmount)
-
-        // Use the existing properties from your DrinkEntry
-        tvTime.text = entry.time
-        tvAmount.text = entry.amount
-
-        // Make entries interactive
-        entryView.setOnClickListener {
-            showEditDialog(entry)
-        }
-
-        entryView.setOnLongClickListener {
-            showDeleteConfirmation(entry)
-            true
-        }
-
-        return entryView
-    }
-
-    private fun createDividerView(): View {
-        return View(this).apply {
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                2
-            ).apply {
-                setMargins(0, 8, 0, 8)
-            }
-            setBackgroundColor(resources.getColor(android.R.color.darker_gray, theme))
-        }
-    }
-
     private fun setupBottomNavigation() {
         findViewById<LinearLayout>(R.id.tabHome).setOnClickListener {
             navigateToActivity(HomeActivity::class.java)
@@ -196,10 +208,10 @@ class HistoryActivity : AppCompatActivity(), HistoryView {
 
     private fun navigateToActivity(activityClass: Class<*>) {
         startActivity(Intent(this, activityClass))
-        // Don't call finish() so user can come back and see updated data
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        presenter.onDestroy()
     }
 }
