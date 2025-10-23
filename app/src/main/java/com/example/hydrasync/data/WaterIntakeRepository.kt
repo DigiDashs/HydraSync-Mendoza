@@ -1,15 +1,20 @@
 package com.example.hydrasync.data
 
+import android.util.Log
 import com.example.hydrasync.history.DrinkEntry
 import com.example.hydrasync.home.WaterIntake
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
+import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.*
 
 class WaterIntakeRepository private constructor() {
 
-    // In-memory storage (replace with Room database later)
-    private val drinkEntries = mutableListOf<DrinkEntry>()
-    private var dailyGoal = 2000
+    private val database: FirebaseDatabase = FirebaseDatabase.getInstance("https://hydrasync-14b0a-default-rtdb.asia-southeast1.firebasedatabase.app")
+    private val userRepository = UserRepository.getInstance()
 
     companion object {
         @Volatile
@@ -20,123 +25,106 @@ class WaterIntakeRepository private constructor() {
                 INSTANCE ?: WaterIntakeRepository().also { INSTANCE = it }
             }
         }
-
-        private fun getTodayDate(): String {
-            return SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-        }
-
-        private fun getYesterdayDate(): String {
-            val calendar = Calendar.getInstance().apply {
-                add(Calendar.DAY_OF_YEAR, -1)
-            }
-            return SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(calendar.time)
-        }
-
-        private fun getCurrentTime(): String {
-            return SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date())
-        }
     }
 
-    // Add new drink entry (called from Home when user adds intake)
-    fun addDrinkEntry(amountMl: Int): DrinkEntry {
-        val entry = DrinkEntry(
-            time = getCurrentTime(),
-            amount = "$amountMl ML",
-            date = "Today"
-        )
-        drinkEntries.add(entry)
-        return entry
+    // Get reference to current user's water logs
+    private fun getWaterLogsReference(): DatabaseReference? {
+        val userRef = userRepository.getUserReference()
+        return userRef?.child("waterLogs")
     }
 
-    // Get all entries for History screen
-    fun getAllEntries(): List<DrinkEntry> {
-        return drinkEntries.toList()
-    }
+    // Add new drink entry to Firebase
+    suspend fun addDrinkEntry(amountMl: Int): Boolean {
+        return try {
+            val waterLogsRef = getWaterLogsReference() ?: return false
 
-    // Get entries for specific date
-    fun getEntriesForDate(dateFilter: String): List<DrinkEntry> {
-        return drinkEntries.filter { it.date == dateFilter }
-    }
-
-    // Get today's entries for Home screen
-    fun getTodayEntries(): List<DrinkEntry> {
-        return getEntriesForDate("Today")
-    }
-
-    // Get yesterday's entries
-    fun getYesterdayEntries(): List<DrinkEntry> {
-        return getEntriesForDate("Yesterday")
-    }
-
-    // Calculate total intake for date
-    fun getTotalIntakeForDate(dateFilter: String): Int {
-        return getEntriesForDate(dateFilter).sumOf {
-            it.amount.replace(" ML", "").toIntOrNull() ?: 0
-        }
-    }
-
-    // Get today's total for Home screen
-    fun getTodayTotalIntake(): Int {
-        return getTotalIntakeForDate("Today")
-    }
-
-    // Get current water intake status for Home
-    fun getCurrentWaterIntake(): WaterIntake {
-        val todayEntries = getTodayEntries()
-        val totalIntake = todayEntries.sumOf {
-            it.amount.replace(" ML", "").toIntOrNull() ?: 0
-        }
-        val lastEntry = todayEntries.lastOrNull()
-
-        return WaterIntake(
-            currentIntake = totalIntake,
-            dailyGoal = dailyGoal,
-            lastDrink = lastEntry?.amount ?: "0 ML",
-            timeAgo = if (lastEntry != null) "Just now" else "Never"
-        )
-    }
-
-    // Delete entry (for interactive features)
-    fun deleteEntry(entry: DrinkEntry): Boolean {
-        return drinkEntries.remove(entry)
-    }
-
-    // Update entry (for editing features)
-    fun updateEntry(oldEntry: DrinkEntry, newAmountMl: Int): DrinkEntry? {
-        val index = drinkEntries.indexOf(oldEntry)
-        if (index != -1) {
-            val updatedEntry = DrinkEntry(
-                time = oldEntry.time,
-                amount = "$newAmountMl ML",
-                date = oldEntry.date
+            val waterLog = WaterLog(
+                id = waterLogsRef.push().key ?: UUID.randomUUID().toString(),
+                amount = amountMl,
+                timestamp = System.currentTimeMillis(),
+                date = WaterLog.getCurrentTimestampDate()
             )
-            drinkEntries[index] = updatedEntry
-            return updatedEntry
+
+            waterLogsRef.child(waterLog.id).setValue(waterLog).await()
+            true
+        } catch (e: Exception) {
+            Log.e("WaterIntakeRepository", "Error adding drink entry: ${e.message}", e)
+            false
         }
-        return null
     }
 
-    // Set daily goal
-    fun setDailyGoal(goal: Int) {
-        dailyGoal = goal
+    // Get all water logs from Firebase
+    suspend fun getAllWaterLogs(): List<WaterLog> {
+        return try {
+            val waterLogsRef = getWaterLogsReference() ?: return emptyList()
+            val snapshot = waterLogsRef.get().await()
+
+            val waterLogs = mutableListOf<WaterLog>()
+            for (child in snapshot.children) {
+                val waterLog = child.getValue(WaterLog::class.java)
+                waterLog?.let {
+                    waterLogs.add(it.copy(id = child.key ?: ""))
+                }
+            }
+
+            // Sort by timestamp descending (newest first)
+            waterLogs.sortedByDescending { it.timestamp }
+        } catch (e: Exception) {
+            Log.e("WaterIntakeRepository", "Error getting water logs: ${e.message}", e)
+            emptyList()
+        }
     }
 
-    fun getDailyGoal(): Int = dailyGoal
-
-    // Reset daily progress (for new day)
-    fun resetDailyProgress() {
-        drinkEntries.removeAll { it.date == "Today" }
+    // Get today's water logs
+    suspend fun getTodayWaterLogs(): List<WaterLog> {
+        val allLogs = getAllWaterLogs()
+        val todayDate = WaterLog.getCurrentFormattedDate()
+        return allLogs.filter { it.toDrinkEntry().date == todayDate }
     }
 
-    // Add some sample data for testing
-    fun addSampleData() {
-        if (drinkEntries.isEmpty()) {
-            // Add sample entries
-            drinkEntries.addAll(listOf(
-                DrinkEntry("09:45 PM", "300 ML", "Yesterday"),
-                DrinkEntry("03:20 PM", "500 ML", "Yesterday"),
-                DrinkEntry("10:30 AM", "350 ML", "Yesterday")
-            ))
+    // Calculate total intake for today
+    suspend fun getTodayTotalIntake(): Int {
+        val todayLogs = getTodayWaterLogs()
+        return todayLogs.sumOf { it.amount }
+    }
+
+    // Delete water log entry
+    suspend fun deleteWaterLog(waterLogId: String): Boolean {
+        return try {
+            val waterLogsRef = getWaterLogsReference() ?: return false
+            waterLogsRef.child(waterLogId).removeValue().await()
+            true
+        } catch (e: Exception) {
+            Log.e("WaterIntakeRepository", "Error deleting water log: ${e.message}", e)
+            false
+        }
+    }
+
+    // Update water log entry
+    suspend fun updateWaterLog(waterLogId: String, newAmount: Int): Boolean {
+        return try {
+            val waterLogsRef = getWaterLogsReference() ?: return false
+            val updates = mapOf(
+                "amount" to newAmount,
+                "timestamp" to System.currentTimeMillis(),
+                "date" to WaterLog.getCurrentTimestampDate()
+            )
+            waterLogsRef.child(waterLogId).updateChildren(updates).await()
+            true
+        } catch (e: Exception) {
+            Log.e("WaterIntakeRepository", "Error updating water log: ${e.message}", e)
+            false
+        }
+    }
+
+    // Get water log by ID
+    suspend fun getWaterLogById(waterLogId: String): WaterLog? {
+        return try {
+            val waterLogsRef = getWaterLogsReference() ?: return null
+            val snapshot = waterLogsRef.child(waterLogId).get().await()
+            snapshot.getValue(WaterLog::class.java)?.copy(id = waterLogId)
+        } catch (e: Exception) {
+            null
         }
     }
 }
