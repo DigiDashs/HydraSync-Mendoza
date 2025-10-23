@@ -26,13 +26,27 @@
 
         <!-- Title -->
         <TextView
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:text="Profile"
             android:textColor="@android:color/white"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:layout_marginStart="16dp" />
+            android:layout_marginStart="16dp"
+            android:gravity="center" />
+
+        <!-- Edit Button -->
+        <Button
+            android:id="@+id/btnEdit"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="Edit"
+            android:textColor="@android:color/white"
+            android:background="@android:color/transparent"
+            android:textSize="14sp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp" />
 
     </LinearLayout>
 
@@ -67,7 +81,6 @@
                     android:padding="16dp"
                     app:tint="#1e5a8a" />
 
-                <!-- REMOVE android:text="John Doe" -->
                 <TextView
                     android:id="@+id/tvUserName"
                     android:layout_width="wrap_content"
@@ -77,7 +90,6 @@
                     android:textStyle="bold"
                     android:layout_marginTop="12dp" />
 
-                <!-- REMOVE android:text="johndoe@email.com" -->
                 <TextView
                     android:id="@+id/tvUserEmail"
                     android:layout_width="wrap_content"
@@ -102,11 +114,13 @@
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:hint="Enter first name"
-                android:background="@android:drawable/edit_text"
+                android:background="@drawable/edit_text_locked"
                 android:padding="12dp"
                 android:textColor="@android:color/black"
                 android:textSize="16sp"
-                android:layout_marginBottom="16dp" />
+                android:layout_marginBottom="16dp"
+                android:focusable="false"
+                android:clickable="false" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -121,11 +135,13 @@
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:hint="Enter last name"
-                android:background="@android:drawable/edit_text"
+                android:background="@drawable/edit_text_locked"
                 android:padding="12dp"
                 android:textColor="@android:color/black"
                 android:textSize="16sp"
-                android:layout_marginBottom="16dp" />
+                android:layout_marginBottom="16dp"
+                android:focusable="false"
+                android:clickable="false" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -135,18 +151,19 @@
                 android:textSize="14sp"
                 android:layout_marginBottom="4dp" />
 
-            <!-- REMOVE android:text="johndoe@email.com" -->
             <EditText
                 android:id="@+id/etEmail"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:hint="Enter your email"
                 android:inputType="textEmailAddress"
-                android:background="@android:drawable/edit_text"
+                android:background="@drawable/edit_text_locked"
                 android:padding="12dp"
                 android:textColor="@android:color/black"
                 android:textSize="16sp"
-                android:layout_marginBottom="16dp" />
+                android:layout_marginBottom="16dp"
+                android:focusable="false"
+                android:clickable="false" />
 
             <!-- Gender -->
             <TextView
@@ -161,10 +178,11 @@
                 android:id="@+id/spinnerGender"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
-                android:background="@android:drawable/edit_text"
+                android:background="@drawable/edit_text_locked"
                 android:paddingHorizontal="12dp"
                 android:entries="@array/gender_options"
-                android:layout_marginBottom="16dp" />
+                android:layout_marginBottom="16dp"
+                android:enabled="false" />
 
             <!-- Birthday -->
             <TextView
@@ -181,31 +199,53 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="32dp"
-                android:hint="MM/DD/YYYY">
+                android:hint="MM/DD/YYYY"
+                android:enabled="false">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etBirthday"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:focusable="false"
-                    android:clickable="true"
+                    android:clickable="false"
                     android:cursorVisible="false"
                     android:textColor="@android:color/black"
                     android:textSize="16sp" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Save Button -->
-            <Button
-                android:id="@+id/btnSaveProfile"
+            <!-- Save and Cancel Buttons (Initially Hidden) -->
+            <LinearLayout
+                android:id="@+id/llEditButtons"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:text="Save Changes"
-                android:textSize="16sp"
-                android:textColor="@android:color/white"
-                android:textStyle="bold"
-                android:background="#1e5a8a"
-                android:gravity="center"/>
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:visibility="gone"
+                android:layout_marginTop="16dp">
+
+                <Button
+                    android:id="@+id/btnCancel"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="Cancel"
+                    android:textSize="16sp"
+                    android:textColor="#1e5a8a"
+                    android:background="@drawable/button_outline"
+                    android:layout_marginEnd="8dp" />
+
+                <Button
+                    android:id="@+id/btnSave"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="Save"
+                    android:textSize="16sp"
+                    android:textColor="@android:color/white"
+                    android:background="#1e5a8a"
+                    android:layout_marginStart="8dp" />
+
+            </LinearLayout>
 
         </LinearLayout>
     </ScrollView>
