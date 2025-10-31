@@ -109,12 +109,21 @@ class SettingsRepository : SettingsContract.Repository {
 
     override fun logout(): Boolean {
         return try {
+            // Clear the ESP32 pairing in Firebase
+            val deviceRef = database.getReference("pairing").child("ESP32_001")
+            deviceRef.child("activeUser").setValue("").addOnCompleteListener {
+                Log.d("SettingsRepository", "✅ Active user cleared from /pairing/ESP32_001")
+            }
+
+            // Then log out from Firebase Auth
             loginRepository.logout()
             true
         } catch (e: Exception) {
+            Log.e("SettingsRepository", "❌ Error during logout: ${e.message}")
             false
         }
     }
+
 
     suspend fun getDailyGoal(): Int {
         return try {
