@@ -2,6 +2,7 @@ package com.example.hydrasync.login
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.tasks.await
 
 class LoginRepository private constructor() {
@@ -33,6 +34,7 @@ class LoginRepository private constructor() {
                     firstName = names.getOrNull(0) ?: "",
                     lastName = names.getOrNull(1) ?: ""
                 )
+                updateDevicePairing(firebaseUser.uid)
                 LoginResponse(true, "Login successful", user)
             } else {
                 LoginResponse(false, "Authentication failed")
@@ -56,6 +58,7 @@ class LoginRepository private constructor() {
     }
 
     fun logout() {
+        updateDevicePairing(null)
         firebaseAuth.signOut()
     }
 
@@ -76,6 +79,26 @@ class LoginRepository private constructor() {
             else -> "Login failed: ${exception.message}"
         }
     }
+
+    private fun updateDevicePairing(activeUid: String?) {
+        val deviceId = "ESP32_001" // ⚙️ your actual ESP32 device ID
+        val ref = FirebaseDatabase.getInstance(
+            "https://hydrasync-14b0a-default-rtdb.asia-southeast1.firebasedatabase.app"
+        ).getReference("pairing/$deviceId/activeUser")
+
+        ref.setValue(activeUid ?: "")
+            .addOnSuccessListener {
+                if (activeUid.isNullOrEmpty()) {
+                    println("✅ Device unpaired (no active user)")
+                } else {
+                    println("✅ Device paired with user: $activeUid")
+                }
+            }
+            .addOnFailureListener { e ->
+                println("❌ Failed to update pairing: ${e.message}")
+            }
+    }
+
 
     // removed methods
     // - getAllUsers()
