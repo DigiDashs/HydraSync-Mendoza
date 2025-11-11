@@ -2,11 +2,15 @@ package com.example.hydrasync.data
 
 import android.util.Log
 import com.example.hydrasync.history.DrinkEntry
-import com.example.hydrasync.home.WaterIntake
+import com.google.firebase.database.ChildEventListener
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.*
@@ -15,6 +19,10 @@ class WaterIntakeRepository private constructor() {
 
     private val database: FirebaseDatabase = FirebaseDatabase.getInstance("https://hydrasync-14b0a-default-rtdb.asia-southeast1.firebasedatabase.app")
     private val userRepository = UserRepository.getInstance()
+
+    // Store active listeners
+    private var waterLogsListener: ValueEventListener? = null
+    private var childEventListener: ChildEventListener? = null
 
     companion object {
         @Volatile
@@ -31,6 +39,178 @@ class WaterIntakeRepository private constructor() {
     private fun getWaterLogsReference(): DatabaseReference? {
         val userRef = userRepository.getUserReference()
         return userRef?.child("waterLogs")
+    }
+
+    // ============ REAL-TIME LISTENERS ============
+
+    /**
+     * Observe water logs in real-time - automatically updates when ESP32 adds new data
+     */
+    fun observeWaterLogs(): Flow<List<WaterLog>> = callbackFlow {
+        val waterLogsRef = getWaterLogsReference() ?: run {
+            trySend(emptyList())
+            awaitClose()
+            return@callbackFlow
+        }
+
+        val valueEventListener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val waterLogs = mutableListOf<WaterLog>()
+
+                for (child in snapshot.children) {
+                    val waterLog = child.getValue(WaterLog::class.java)
+                    waterLog?.let {
+                        waterLogs.add(it.copy(id = child.key ?: ""))
+                    }
+                }
+
+                // Sort by timestamp descending (newest first)
+                val sortedLogs = waterLogs.sortedByDescending { it.timestamp }
+                trySend(sortedLogs).isSuccess
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.e("WaterIntakeRepository", "Real-time listener cancelled: ${error.message}")
+                close(error.toException())
+            }
+        }
+
+        waterLogsRef.addValueEventListener(valueEventListener)
+        waterLogsListener = valueEventListener
+
+        awaitClose {
+            waterLogsListener?.let { listener ->
+                waterLogsRef.removeEventListener(listener)
+            }
+        }
+    }
+
+    /**
+     * Observe today's water logs in real-time
+     */
+    fun observeTodayWaterLogs(): Flow<List<WaterLog>> = callbackFlow {
+        val waterLogsRef = getWaterLogsReference() ?: run {
+            trySend(emptyList())
+            awaitClose()
+            return@callbackFlow
+        }
+
+        val valueEventListener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val waterLogs = mutableListOf<WaterLog>()
+                val todayDate = WaterLog.getCurrentFormattedDate()
+
+                for (child in snapshot.children) {
+                    val waterLog = child.getValue(WaterLog::class.java)
+                    waterLog?.let {
+                        if (it.toDrinkEntry().date == todayDate) {
+                            waterLogs.add(it.copy(id = child.key ?: ""))
+                        }
+                    }
+                }
+
+                // Sort by timestamp descending
+                val sortedLogs = waterLogs.sortedByDescending { it.timestamp }
+                trySend(sortedLogs).isSuccess
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.e("WaterIntakeRepository", "Today's logs listener cancelled: ${error.message}")
+                close(error.toException())
+            }
+        }
+
+        waterLogsRef.addValueEventListener(valueEventListener)
+        waterLogsListener = valueEventListener
+
+        awaitClose {
+            waterLogsListener?.let { waterLogsRef.removeEventListener(it) }
+        }
+    }
+
+    /**
+     * Observe today's total intake in real-time
+     */
+    fun observeTodayTotalIntake(): Flow<Int> = callbackFlow {
+        val waterLogsRef = getWaterLogsReference() ?: run {
+            trySend(0)
+            awaitClose()
+            return@callbackFlow
+        }
+
+        val valueEventListener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val todayDate = WaterLog.getCurrentFormattedDate()
+                var total = 0
+
+                for (child in snapshot.children) {
+                    val waterLog = child.getValue(WaterLog::class.java)
+                    waterLog?.let {
+                        if (it.toDrinkEntry().date == todayDate) {
+                            total += it.amount
+                        }
+                    }
+                }
+
+                trySend(total).isSuccess
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.e("WaterIntakeRepository", "Total intake listener cancelled: ${error.message}")
+                close(error.toException())
+            }
+        }
+
+        waterLogsRef.addValueEventListener(valueEventListener)
+        waterLogsListener = valueEventListener
+
+        awaitClose {
+            waterLogsListener?.let { waterLogsRef.removeEventListener(it) }
+        }
+    }
+
+    /**
+     * Listen specifically for NEW water log entries (optimized for ESP32 updates)
+     */
+    fun observeNewWaterLogs(): Flow<WaterLog> = callbackFlow {
+        val waterLogsRef = getWaterLogsReference() ?: run {
+            awaitClose()
+            return@callbackFlow
+        }
+
+        val childEventListener = object : ChildEventListener {
+            override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+                val waterLog = snapshot.getValue(WaterLog::class.java)
+                waterLog?.let {
+                    Log.d("WaterIntakeRepository", "🆕 New water log detected: ${it.amount}ml")
+                    trySend(it.copy(id = snapshot.key ?: "")).isSuccess
+                }
+            }
+
+            override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
+                // Handle updates if needed
+            }
+
+            override fun onChildRemoved(snapshot: DataSnapshot) {
+                // Handle removals if needed
+            }
+
+            override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {
+                // Not used
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.e("WaterIntakeRepository", "New logs listener cancelled: ${error.message}")
+                close(error.toException())
+            }
+        }
+
+        waterLogsRef.addChildEventListener(childEventListener)
+        this@WaterIntakeRepository.childEventListener = childEventListener
+
+        awaitClose {
+            childEventListener?.let { waterLogsRef.removeEventListener(it) }
+        }
     }
 
     // Add new drink entry to Firebase
@@ -53,7 +233,7 @@ class WaterIntakeRepository private constructor() {
         }
     }
 
-    // Get all water logs from Firebase
+    // Get all water logs from Firebase (one-time)
     suspend fun getAllWaterLogs(): List<WaterLog> {
         return try {
             val waterLogsRef = getWaterLogsReference() ?: return emptyList()
@@ -75,14 +255,14 @@ class WaterIntakeRepository private constructor() {
         }
     }
 
-    // Get today's water logs
+    // Get today's water logs (one-time)
     suspend fun getTodayWaterLogs(): List<WaterLog> {
         val allLogs = getAllWaterLogs()
         val todayDate = WaterLog.getCurrentFormattedDate()
         return allLogs.filter { it.toDrinkEntry().date == todayDate }
     }
 
-    // Calculate total intake for today
+    // Calculate total intake for today (one-time)
     suspend fun getTodayTotalIntake(): Int {
         val todayLogs = getTodayWaterLogs()
         return todayLogs.sumOf { it.amount }
@@ -125,6 +305,18 @@ class WaterIntakeRepository private constructor() {
             snapshot.getValue(WaterLog::class.java)?.copy(id = waterLogId)
         } catch (e: Exception) {
             null
+        }
+    }
+
+    // Clean up listeners
+    fun cleanup() {
+        waterLogsListener?.let {
+            getWaterLogsReference()?.removeEventListener(it)
+            waterLogsListener = null
+        }
+        childEventListener?.let {
+            getWaterLogsReference()?.removeEventListener(it)
+            childEventListener = null
         }
     }
 }
