@@ -4,8 +4,11 @@ import android.util.Log
 import com.example.hydrasync.data.WaterIntakeRepository
 import com.example.hydrasync.data.WaterLog
 import com.example.hydrasync.login.LoginRepository
+import com.example.hydrasync.login.User
 import com.example.hydrasync.settings.SettingsRepository
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.onEach
 
 class HomePresenter(private var view: HomeContract.View?) : HomeContract.Presenter {
 
@@ -15,6 +18,9 @@ class HomePresenter(private var view: HomeContract.View?) : HomeContract.Present
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var hasShownGoalAchievement = false
     private var dailyGoal: Int = 2000 // Default goal
+
+    // Job for real-time listeners
+    private var realTimeJob: Job? = null
 
     override fun loadHomeData() {
         scope.launch {
@@ -30,81 +36,130 @@ class HomePresenter(private var view: HomeContract.View?) : HomeContract.Present
 
                     Log.d("HydraSync", "Daily goal loaded: $dailyGoal")
 
-                    // Get today's water intake from Firebase
+                    // START REAL-TIME LISTENING
+                    startRealTimeListening()
+
+                    // Initial data load
                     val todayTotalIntake = withContext(Dispatchers.IO) {
                         waterRepository.getTodayTotalIntake()
                     }
 
-                    // Get today's water logs for last drink info
                     val todayLogs = withContext(Dispatchers.IO) {
                         waterRepository.getTodayWaterLogs()
                     }
 
-                    val lastDrink = if (todayLogs.isNotEmpty()) {
-                        val latestLog = todayLogs.maxByOrNull { it.timestamp }
-                        "${latestLog?.amount ?: 0} ML"
-                    } else {
-                        "0 ML"
-                    }
-
-                    val lastDrinkTime = if (todayLogs.isNotEmpty()) {
-                        todayLogs.maxByOrNull { it.timestamp }?.timestamp ?: 0L
-                    } else {
-                        0L
-                    }
-
-                    val waterIntake = WaterIntake(
-                        currentIntake = todayTotalIntake,
-                        dailyGoal = dailyGoal,
-                        lastDrink = lastDrink,
-                        lastDrinkTime = lastDrinkTime
-                    )
-
-                    val homeData = HomeData(
-                        user = currentUser,
-                        waterIntake = waterIntake,
-                        isConnected = true,
-                        goalAchievedToday = waterIntake.isGoalAchieved()
-                    )
-
-                    view?.displayHomeData(homeData)
-                    view?.updateWaterProgress(waterIntake)
-                    updateProgressView()
-
-                    // Check for goal achievement
-                    if (waterIntake.isGoalAchieved() && !hasShownGoalAchievement) {
-                        Log.d("HydraSync", "🎉 Goal achieved for today!")
-                        view?.showGoalAchieved()
-                        hasShownGoalAchievement = true
-                    }
+                    updateUI(todayTotalIntake, todayLogs)
 
                 } catch (e: Exception) {
                     Log.e("HydraSync", "Error loading data: ${e.message}", e)
                     view?.showToast("Error loading data, using default values")
-
-                    // Fallback with default values
-                    val waterIntake = WaterIntake(
-                        currentIntake = 0,
-                        dailyGoal = dailyGoal,
-                        lastDrink = "0 ML",
-                        lastDrinkTime = 0L
-                    )
-
-                    val homeData = HomeData(
-                        user = currentUser,
-                        waterIntake = waterIntake,
-                        isConnected = true,
-                        goalAchievedToday = false
-                    )
-                    view?.displayHomeData(homeData)
-                    view?.updateWaterProgress(waterIntake)
-                    updateProgressView()
+                    showFallbackData(currentUser)
                 }
             } else {
                 Log.w("HydraSync", "User is null - navigating to login")
                 view?.navigateToLogin()
             }
         }
+    }
+
+    private fun startRealTimeListening() {
+        // Cancel existing listeners
+        realTimeJob?.cancel()
+
+        realTimeJob = scope.launch {
+            // Listen for today's total intake changes
+            waterRepository.observeTodayTotalIntake()
+                .onEach { totalIntake ->
+                    Log.d("HydraSync", "🔄 Real-time update - Total: ${totalIntake}ml")
+
+                    // Get latest logs to update last drink info
+                    val todayLogs = withContext(Dispatchers.IO) {
+                        waterRepository.getTodayWaterLogs()
+                    }
+
+                    updateUI(totalIntake, todayLogs)
+                }
+                .collect()
+
+            // Optional: Listen specifically for new log entries from ESP32
+            waterRepository.observeNewWaterLogs()
+                .onEach { newLog ->
+                    Log.d("HydraSync", "🆕 New entry from ESP32: ${newLog.amount}ml")
+                    view?.showToast("New water intake: ${newLog.amount}ml")
+                }
+                .collect()
+        }
+    }
+
+    private fun updateUI(totalIntake: Int, todayLogs: List<WaterLog>) {
+        val currentUser = loginRepository.getCurrentUser()
+        if (currentUser == null) {
+            Log.w("HydraSync", "User became null during update - navigating to login")
+            view?.navigateToLogin()
+            return
+        }
+
+        val lastDrink = if (todayLogs.isNotEmpty()) {
+            val latestLog = todayLogs.maxByOrNull { it.timestamp }
+            "${latestLog?.amount ?: 0} ML"
+        } else {
+            "0 ML"
+        }
+
+        val lastDrinkTime = if (todayLogs.isNotEmpty()) {
+            todayLogs.maxByOrNull { it.timestamp }?.timestamp ?: 0L
+        } else {
+            0L
+        }
+
+        val waterIntake = WaterIntake(
+            currentIntake = totalIntake,
+            dailyGoal = dailyGoal,
+            lastDrink = lastDrink,
+            lastDrinkTime = lastDrinkTime
+        )
+
+        val homeData = HomeData(
+            user = currentUser,
+            waterIntake = waterIntake,
+            isConnected = true,
+            goalAchievedToday = waterIntake.isGoalAchieved()
+        )
+
+        view?.displayHomeData(homeData)
+        view?.updateWaterProgress(waterIntake)
+        updateProgressView()
+
+        // Check for goal achievement
+        if (waterIntake.isGoalAchieved() && !hasShownGoalAchievement) {
+            Log.d("HydraSync", "🎉 Goal achieved for today!")
+            view?.showGoalAchieved()
+            hasShownGoalAchievement = true
+        }
+    }
+
+    private fun showFallbackData(currentUser: User?) {  // Changed to just User? without package prefix
+        if (currentUser == null) {
+            view?.navigateToLogin()
+            return
+        }
+
+        val waterIntake = WaterIntake(
+            currentIntake = 0,
+            dailyGoal = dailyGoal,
+            lastDrink = "0 ML",
+            lastDrinkTime = 0L
+        )
+
+        val homeData = HomeData(
+            user = currentUser,
+            waterIntake = waterIntake,
+            isConnected = true,
+            goalAchievedToday = false
+        )
+        view?.displayHomeData(homeData)
+        view?.updateWaterProgress(waterIntake)
+        updateProgressView()
     }
 
     override fun onAddIntakeClicked() {
@@ -246,6 +301,9 @@ class HomePresenter(private var view: HomeContract.View?) : HomeContract.Present
 
     override fun onDestroy() {
         Log.d("HydraSync", "Presenter destroyed")
+        // Clean up real-time listeners
+        realTimeJob?.cancel()
+        waterRepository.cleanup()
         scope.cancel()
         view = null
     }
