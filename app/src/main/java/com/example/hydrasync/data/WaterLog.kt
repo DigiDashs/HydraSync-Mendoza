@@ -24,7 +24,7 @@ data class WaterLog(
     companion object {
         private fun formatTime(timestamp: Long): String {
             val date = Date(timestamp)
-            val format = SimpleDateFormat("hh:mm:ss a", Locale.getDefault()) // Added seconds
+            val format = SimpleDateFormat("hh:mm:ss a", Locale.getDefault())
             return format.format(date)
         }
 
@@ -33,7 +33,7 @@ data class WaterLog(
                 // Convert from "2025-10-2106:49:18" to "Oct 21, 2025"
                 val inputFormat = SimpleDateFormat("yyyy-MM-ddHH:mm:ss", Locale.getDefault())
                 val outputFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
-                val date = inputFormat.parse(dateString)
+                val date = inputFormat.parse(dateString) ?: Date() // Fix: Handle null case
                 outputFormat.format(date)
             } catch (e: Exception) {
                 // Fallback to today's date
