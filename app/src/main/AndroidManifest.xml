@@ -13,6 +13,7 @@
         android:label="HydraSync"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
+        android:usesCleartextTraffic="true"
         android:theme="@style/Theme.HydraSync"
         tools:targetApi="31">
 
@@ -44,6 +45,9 @@
             android:name=".profile.ProfileActivity"
             android:exported="true" />
         <receiver android:name=".alerts.InactivityReceiver" />
+
+        <activity android:name=".esp32.Esp32SetupActivity" />
+
 
 
     </application>

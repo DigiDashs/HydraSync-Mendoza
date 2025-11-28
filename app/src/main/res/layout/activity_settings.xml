@@ -127,6 +127,8 @@
 
             </LinearLayout>
 
+
+
             <!-- Goals Section -->
             <TextView
                 android:layout_width="wrap_content"
@@ -252,7 +254,7 @@
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:paddingHorizontal="16dp"
-                android:layout_marginBottom="40dp">
+                android:layout_marginBottom="16dp">
 
                 <ImageView
                     android:layout_width="20dp"
@@ -286,6 +288,42 @@
                     android:contentDescription="Arrow right"
                     app:tint="@android:color/darker_gray" />
 
+            </LinearLayout>
+            <!-- ESP32 Wi-Fi Setup Item -->
+            <LinearLayout
+                android:id="@+id/esp32SetupItem"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:background="?android:attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp"
+                android:layout_marginBottom="24dp">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_wifi"
+                    android:contentDescription="WiFi icon"
+                    app:tint="@android:color/darker_gray" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="ESP32 Wi-Fi Setup"
+                    android:textColor="@android:color/black"
+                    android:textSize="16sp"
+                    android:layout_marginStart="12dp" />
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_arrow_right"
+                    android:contentDescription="Arrow right"
+                    app:tint="@android:color/darker_gray" />
             </LinearLayout>
 
             <!-- Logout Button -->

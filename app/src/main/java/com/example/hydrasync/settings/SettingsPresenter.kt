@@ -1,7 +1,5 @@
 package com.example.hydrasync.settings
 
-import android.widget.EditText
-import androidx.appcompat.app.AlertDialog
 import com.example.hydrasync.alerts.InactivityManager
 import com.example.hydrasync.settings.data.SettingsData
 import kotlinx.coroutines.*
@@ -153,6 +151,11 @@ class SettingsPresenter(
             view.showToast("Error updating quiet hours")
         }
     }
+
+    override fun onEsp32SetupClicked() {
+        view.navigateToEsp32Setup()
+    }
+
 
     override fun onDestroy() {
         scope.cancel()

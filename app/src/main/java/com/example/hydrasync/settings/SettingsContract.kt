@@ -18,6 +18,8 @@ interface SettingsContract {
         fun navigateToHome()
         fun navigateToHistory()
         fun showToast(message: String)
+        fun navigateToEsp32Setup()
+
     }
 
     interface Presenter {
@@ -33,6 +35,8 @@ interface SettingsContract {
         fun updateDailyGoal(goalML: Int)
         fun updateInactivityAlert(minutes: Int)
         fun updateQuietHours(startTime: String, endTime: String)
+        fun onEsp32SetupClicked()
+
         fun onDestroy()
     }
 
