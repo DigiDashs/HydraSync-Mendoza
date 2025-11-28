@@ -19,7 +19,6 @@ class HomeActivity : AppCompatActivity(), HomeContract.View {
     private lateinit var tvProgress: TextView
     private lateinit var tvLastDrink: TextView
     private lateinit var tvTimeAgo: TextView
-    private lateinit var tvConnectionStatus: TextView
     private lateinit var btnAddIntake: MaterialButton
     private lateinit var tabHistory: LinearLayout
     private lateinit var tabHome: LinearLayout
@@ -52,14 +51,12 @@ class HomeActivity : AppCompatActivity(), HomeContract.View {
         tvProgress = findViewById(R.id.tvProgress)
         tvLastDrink = findViewById(R.id.tvLastDrink)
         tvTimeAgo = findViewById(R.id.tvTimeAgo)
-        tvConnectionStatus = findViewById(R.id.tvConnectionStatus)
         btnAddIntake = findViewById(R.id.btnAddIntake)
         tabHistory = findViewById(R.id.tabHistory)
         tabHome = findViewById(R.id.tabHome)
         tabSettings = findViewById(R.id.tabSettings)
         ivProfile = findViewById(R.id.ivProfile)
         progressBar = findViewById(R.id.circularProgress)
-
     }
 
     private fun setupClickListeners() {
@@ -73,13 +70,7 @@ class HomeActivity : AppCompatActivity(), HomeContract.View {
         tvUserName.text = "Welcome, ${homeData.user.getFullName()}!"
         updateWaterProgress(homeData.waterIntake)
 
-        tvConnectionStatus.text = homeData.getConnectionStatusText()
-        tvConnectionStatus.setTextColor(
-            if (homeData.isConnected)
-                ContextCompat.getColor(this, R.color.hydra_green)
-            else
-                ContextCompat.getColor(this, R.color.gray)
-        )
+        // Removed tvConnectionStatus references
     }
 
     override fun updateWaterProgress(intake: WaterIntake) {
@@ -108,15 +99,13 @@ class HomeActivity : AppCompatActivity(), HomeContract.View {
                 "+ Add Intake"
             }
         }
-
     }
 
     override fun showGoalProgress(percentage: Int, isGoalAchieved: Boolean) {
-        // Visual feedback: change color when goal is achieved
         val color = if (isGoalAchieved) {
-            ContextCompat.getColor(this, R.color.hydra_green) // Green
+            ContextCompat.getColor(this, R.color.hydra_green)
         } else {
-            ContextCompat.getColor(this, R.color.hydra_blue) // Blue
+            ContextCompat.getColor(this, R.color.hydra_blue)
         }
 
         tvPercentage.setTextColor(color)
@@ -151,7 +140,7 @@ class HomeActivity : AppCompatActivity(), HomeContract.View {
             .setView(input)
             .setPositiveButton("Add") { _, _ ->
                 val amount = input.text.toString().toIntOrNull()
-                if (amount != null && amount > 0 && amount <= 5000) { // Increased max to 5000ml
+                if (amount != null && amount > 0 && amount <= 5000) {
                     presenter.addWaterIntake(amount)
                 } else {
                     showError("Please enter a valid amount (1-5000ml)")

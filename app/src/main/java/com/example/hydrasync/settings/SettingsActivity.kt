@@ -14,11 +14,13 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.example.hydrasync.R
+import com.example.hydrasync.esp32.Esp32SetupActivity
 import com.example.hydrasync.home.HomeActivity
 import com.example.hydrasync.login.LoginActivity
 import com.example.hydrasync.settings.data.SettingsData
 import com.example.hydrasync.history.HistoryActivity
 import com.example.hydrasync.profile.ProfileActivity
+
 
 class SettingsActivity : AppCompatActivity(), SettingsContract.View {
 
@@ -35,6 +37,7 @@ class SettingsActivity : AppCompatActivity(), SettingsContract.View {
     private lateinit var tabHistory: LinearLayout
     private lateinit var tabHome: LinearLayout
     private lateinit var tabSettings: LinearLayout
+    private lateinit var esp32SetupItem: LinearLayout
 
     private lateinit var presenter: SettingsPresenter
 
@@ -60,6 +63,8 @@ class SettingsActivity : AppCompatActivity(), SettingsContract.View {
         tvDailyGoalValue = dailyGoalItem.findViewById(R.id.tvDailyGoalValue)
         tvInactivityAlertValue = inactivityAlertItem.findViewById(R.id.tvInactivityAlertValue)
         tvQuietHoursValue = quietHoursItem.findViewById(R.id.tvQuietHoursValue)
+        esp32SetupItem = findViewById(R.id.esp32SetupItem)
+
 
         tabHistory = findViewById(R.id.tabHistory)
         tabHome = findViewById(R.id.tabHome)
@@ -72,6 +77,7 @@ class SettingsActivity : AppCompatActivity(), SettingsContract.View {
         inactivityAlertItem.setOnClickListener { presenter.onInactivityAlertClicked() }
         quietHoursItem.setOnClickListener { presenter.onQuietHoursClicked() }
         btnLogout.setOnClickListener { presenter.onLogoutClicked() }
+        esp32SetupItem.setOnClickListener { presenter.onEsp32SetupClicked() }
 
         tabHistory.setOnClickListener { presenter.onHistoryClicked() }
         tabHome.setOnClickListener { presenter.onHomeClicked() }
@@ -197,6 +203,12 @@ class SettingsActivity : AppCompatActivity(), SettingsContract.View {
         startActivity(intent)
         finish()
     }
+
+    override fun navigateToEsp32Setup() {
+        val intent = Intent(this, Esp32SetupActivity::class.java)
+        startActivity(intent)
+    }
+
 
     override fun navigateToProfile() {
         startActivity(Intent(this, ProfileActivity::class.java))
