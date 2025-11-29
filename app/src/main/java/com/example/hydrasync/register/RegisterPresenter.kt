@@ -8,7 +8,15 @@ class RegisterPresenter(private var view: RegisterContract.View?) : RegisterCont
     private val repository = RegisterRepository.getInstance()
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
-    override fun register(firstName: String, lastName: String, email: String, password: String, gender: String, birthday: String) {
+    override fun register(
+        firstName: String,
+        lastName: String,
+        email: String,
+        password: String,
+        confirmPassword: String,
+        gender: String,
+        birthday: String,
+    ) {
         Log.d("RegisterPresenter", "=== REGISTER STARTED ===")
         view?.clearErrors()
 
@@ -47,6 +55,9 @@ class RegisterPresenter(private var view: RegisterContract.View?) : RegisterCont
             hasError = true
         } else if (password.length < 6) {
             view?.showPasswordError("Password must be at least 6 characters")
+            hasError = true
+        } else if (password != confirmPassword) {
+            view?.showPasswordError("Passwords do not match")
             hasError = true
         }
 
