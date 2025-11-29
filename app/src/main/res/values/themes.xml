@@ -18,6 +18,13 @@
         <!-- The theme that takes over after splash -->
         <item name="postSplashScreenTheme">@style/Theme.HydraSync</item>
     </style>
+    <style name="Theme.HydraSync.DatePicker" parent="Theme.MaterialComponents.Light.Dialog.Alert">
+        <item name="colorPrimary">#1E5A8B</item> <!-- header color -->
+        <item name="colorAccent">#1E5A8B</item>  <!-- selected date color -->
+        <item name="android:datePickerDialogTheme">@style/Theme.HydraSync.DatePicker</item>
+    </style>
+
+
 
 
 

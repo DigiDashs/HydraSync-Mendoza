@@ -32,6 +32,8 @@ class RegisterActivity : AppCompatActivity(), RegisterContract.View {
     private lateinit var etLastName: TextInputEditText
     private lateinit var etEmail: TextInputEditText
     private lateinit var etPassword: TextInputEditText
+    private lateinit var tilConfirmPassword: TextInputLayout
+    private lateinit var etConfirmPassword: TextInputEditText
     private lateinit var etBirthday: TextInputEditText
     private lateinit var etGender: AutoCompleteTextView
 
@@ -66,6 +68,8 @@ class RegisterActivity : AppCompatActivity(), RegisterContract.View {
         etLastName = findViewById(R.id.etLastName)
         etEmail = findViewById(R.id.etEmail)
         etPassword = findViewById(R.id.etPassword)
+        tilConfirmPassword = findViewById(R.id.tilConfirmPassword)
+        etConfirmPassword = findViewById(R.id.etConfirmPassword)
         etBirthday = findViewById(R.id.etBirthday)
         etGender = findViewById(R.id.etGender)
 
@@ -101,6 +105,7 @@ class RegisterActivity : AppCompatActivity(), RegisterContract.View {
         etBirthday.setOnClickListener {
             DatePickerDialog(
                 this,
+                R.style.Theme_HydraSync_DatePicker,
                 datePickerListener,
                 calendar.get(Calendar.YEAR),
                 calendar.get(Calendar.MONTH),
@@ -123,8 +128,10 @@ class RegisterActivity : AppCompatActivity(), RegisterContract.View {
             val password = etPassword.text.toString().trim()
             val gender = etGender.text.toString().trim()
             val birthday = etBirthday.text.toString().trim()
+            val confirmPassword = etConfirmPassword.text.toString().trim()
 
-            presenter.register(firstName, lastName, email, password, gender, birthday)
+
+            presenter.register(firstName, lastName, email, password, confirmPassword, gender, birthday)
         }
 
         tvLogin.setOnClickListener {
