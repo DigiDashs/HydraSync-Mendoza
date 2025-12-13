@@ -24,8 +24,6 @@ class SettingsRepository : SettingsContract.Repository {
     }
 
     override fun getSettingsData(): SettingsData {
-        // This should be called from a coroutine in the presenter
-        // For now returning default, will be loaded asynchronously
         return SettingsData.getDefault()
     }
 

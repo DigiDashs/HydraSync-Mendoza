@@ -62,7 +62,6 @@ class HistoryPresenter(private val view: HistoryView) {
     fun deleteEntry(entry: DrinkEntry) {
         scope.launch {
             try {
-                // We need to find the corresponding WaterLog
                 val allWaterLogs = withContext(Dispatchers.IO) {
                     repository.getAllWaterLogs()
                 }
@@ -98,7 +97,6 @@ class HistoryPresenter(private val view: HistoryView) {
     fun editEntry(oldEntry: DrinkEntry, newAmount: Int) {
         scope.launch {
             try {
-                // Find the corresponding WaterLog
                 val allWaterLogs = withContext(Dispatchers.IO) {
                     repository.getAllWaterLogs()
                 }

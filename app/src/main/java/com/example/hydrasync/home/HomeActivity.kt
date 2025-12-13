@@ -69,8 +69,6 @@ class HomeActivity : AppCompatActivity(), HomeContract.View {
     override fun displayHomeData(homeData: HomeData) {
         tvUserName.text = "Welcome, ${homeData.user.getFullName()}!"
         updateWaterProgress(homeData.waterIntake)
-
-        // Removed tvConnectionStatus references
     }
 
     override fun updateWaterProgress(intake: WaterIntake) {

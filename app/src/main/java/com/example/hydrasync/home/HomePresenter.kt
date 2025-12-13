@@ -19,7 +19,6 @@ class HomePresenter(private var view: HomeContract.View?) : HomeContract.Present
     private var hasShownGoalAchievement = false
     private var dailyGoal: Int = 2000 // Default goal
 
-    // Job for real-time listeners
     private var realTimeJob: Job? = null
 
     override fun loadHomeData() {
@@ -39,7 +38,6 @@ class HomePresenter(private var view: HomeContract.View?) : HomeContract.Present
                     // START REAL-TIME LISTENING
                     startRealTimeListening()
 
-                    // Initial data load
                     val todayTotalIntake = withContext(Dispatchers.IO) {
                         waterRepository.getTodayTotalIntake()
                     }
@@ -81,7 +79,6 @@ class HomePresenter(private var view: HomeContract.View?) : HomeContract.Present
                 }
                 .collect()
 
-            // Optional: Listen specifically for new log entries from ESP32
             waterRepository.observeNewWaterLogs()
                 .onEach { newLog ->
                     Log.d("HydraSync", "🆕 New entry from ESP32: ${newLog.amount}ml")
@@ -138,7 +135,7 @@ class HomePresenter(private var view: HomeContract.View?) : HomeContract.Present
         }
     }
 
-    private fun showFallbackData(currentUser: User?) {  // Changed to just User? without package prefix
+    private fun showFallbackData(currentUser: User?) {
         if (currentUser == null) {
             view?.navigateToLogin()
             return
@@ -215,7 +212,6 @@ class HomePresenter(private var view: HomeContract.View?) : HomeContract.Present
                         lastDrinkTime = lastDrinkTime
                     )
 
-                    // Goal achievement logic
                     if (!wasGoalAchieved && updatedIntake.isGoalAchieved() && !hasShownGoalAchievement) {
                         Log.d("HydraSync", "🎉 Goal achieved for today!")
                         view?.showGoalAchieved()
