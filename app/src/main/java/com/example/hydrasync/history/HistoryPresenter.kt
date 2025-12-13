@@ -62,7 +62,6 @@ class HistoryPresenter(private val view: HistoryView) {
     fun deleteEntry(entry: DrinkEntry) {
         scope.launch {
             try {
-                // We need to find the corresponding WaterLog
                 val allWaterLogs = withContext(Dispatchers.IO) {
                     repository.getAllWaterLogs()
                 }
@@ -80,7 +79,7 @@ class HistoryPresenter(private val view: HistoryView) {
 
                     if (success) {
                         view.showToast("Entry deleted")
-                        loadDrinkHistory() // Refresh the view
+                        loadDrinkHistory()
                     } else {
                         view.showError("Failed to delete entry")
                     }
@@ -98,7 +97,6 @@ class HistoryPresenter(private val view: HistoryView) {
     fun editEntry(oldEntry: DrinkEntry, newAmount: Int) {
         scope.launch {
             try {
-                // Find the corresponding WaterLog
                 val allWaterLogs = withContext(Dispatchers.IO) {
                     repository.getAllWaterLogs()
                 }
@@ -116,7 +114,7 @@ class HistoryPresenter(private val view: HistoryView) {
 
                     if (success) {
                         view.showToast("Entry updated")
-                        loadDrinkHistory() // Refresh the view
+                        loadDrinkHistory()
                     } else {
                         view.showError("Failed to update entry")
                     }

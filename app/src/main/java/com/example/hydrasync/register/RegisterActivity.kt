@@ -82,8 +82,6 @@ class RegisterActivity : AppCompatActivity(), RegisterContract.View {
             genderOptions
         )
         etGender.setAdapter(genderAdapter)
-
-        // Disable keyboard, force dropdown only
         etGender.keyListener = null
         etGender.setOnClickListener {
             etGender.showDropDown()

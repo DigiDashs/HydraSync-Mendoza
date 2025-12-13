@@ -42,7 +42,6 @@ class HomeActivity : AppCompatActivity(), HomeContract.View {
 
     override fun onResume() {
         super.onResume()
-        // Reload data when returning from Settings to get updated goal
         presenter.loadHomeData()
     }
 
@@ -89,11 +88,9 @@ class HomeActivity : AppCompatActivity(), HomeContract.View {
         tvLastDrink.text = "Last Drink: ${intake.lastDrink}"
         tvTimeAgo.text = intake.getFormattedTimeAgo()
 
-        // Set progress bar - ALWAYS capped at 100%
         progressBar.max = 100
         progressBar.progress = percentage
 
-        // Update button text based on goal status
         if (intake.isGoalAchieved()) {
             if (intake.getExceededAmount() > 0) {
                 btnAddIntake.text = "Goal Reached! +${intake.getExceededAmount()}mL extra"
@@ -112,7 +109,6 @@ class HomeActivity : AppCompatActivity(), HomeContract.View {
     }
 
     override fun showGoalProgress(percentage: Int, isGoalAchieved: Boolean) {
-        // Visual feedback: change color when goal is achieved
         val color = if (isGoalAchieved) {
             ContextCompat.getColor(this, R.color.hydra_green) // Green
         } else {

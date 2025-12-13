@@ -29,7 +29,6 @@ class RegisterRepository private constructor() {
             if (firebaseUser != null) {
                 Log.d("RegisterRepository", "Firebase Auth user created: ${firebaseUser.uid}")
 
-                // Update user profile with first and last name
                 val profileUpdates = UserProfileChangeRequest.Builder()
                     .setDisplayName("$firstName $lastName")
                     .build()
@@ -37,7 +36,6 @@ class RegisterRepository private constructor() {
                 firebaseUser.updateProfile(profileUpdates).await()
                 Log.d("RegisterRepository", "Firebase profile updated")
 
-                // Convert FirebaseUser to our User model
                 val user = com.example.hydrasync.login.User(
                     uid = firebaseUser.uid,
                     email = firebaseUser.email ?: email,
@@ -49,7 +47,6 @@ class RegisterRepository private constructor() {
 
                 Log.d("RegisterRepository", "User model created, saving to UserRepository")
 
-                // RE-ENABLE UserRepository calls
                 val userRepository = com.example.hydrasync.data.UserRepository.getInstance()
                 val profileSaved = userRepository.saveUserProfile(user)
                 val settingsInitialized = userRepository.initializeDefaultSettings()
@@ -83,16 +80,4 @@ class RegisterRepository private constructor() {
         }
     }
 
-    fun getCurrentUser(): com.example.hydrasync.login.User? {
-        val firebaseUser = firebaseAuth.currentUser
-        return firebaseUser?.let { user ->
-            val names = user.displayName?.split(" ") ?: listOf("", "")
-            com.example.hydrasync.login.User(
-                uid = user.uid,
-                email = user.email ?: "",
-                firstName = names.getOrNull(0) ?: "",
-                lastName = names.getOrNull(1) ?: ""
-            )
-        }
-    }
 }

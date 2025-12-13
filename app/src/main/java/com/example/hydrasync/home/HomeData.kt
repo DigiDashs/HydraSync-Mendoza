@@ -9,21 +9,16 @@ data class WaterIntake(
     val timeAgo: String = "Never",
     val lastDrinkTime: Long = System.currentTimeMillis()
 ) {
-    // ALWAYS cap percentage at 100% to prevent UI overflow
     fun getPercentage(): Int = min(100, ((currentIntake.toFloat() / dailyGoal) * 100).toInt())
 
     fun getProgressText(): String = "$currentIntake / ${dailyGoal}ml"
 
-    // Check if daily goal is achieved
     fun isGoalAchieved(): Boolean = currentIntake >= dailyGoal
 
-    // Get remaining amount to reach goal (never negative)
     fun getRemainingIntake(): Int = maxOf(0, dailyGoal - currentIntake)
 
-    // Get amount exceeded if over goal
     fun getExceededAmount(): Int = maxOf(0, currentIntake - dailyGoal)
 
-    // Get motivational status text
     fun getStatusText(): String {
         return when {
             currentIntake == 0 -> "Let's start hydrating!"
@@ -36,7 +31,6 @@ data class WaterIntake(
         }
     }
 
-    // Get formatted time ago
     fun getFormattedTimeAgo(): String {
         if (currentIntake == 0) return "No drinks yet today"
 
@@ -51,7 +45,6 @@ data class WaterIntake(
         }
     }
 
-    // Get progress color based on achievement
     fun getProgressColor(): String {
         return when {
             isGoalAchieved() -> "#4CAF50" // Green - goal achieved
@@ -74,12 +67,4 @@ data class HomeData(
         return if (isConnected) "Connected" else "Disconnected"
     }
 
-    fun getLastSyncText(): String {
-        val diffInMinutes = (System.currentTimeMillis() - lastSyncTime) / (1000 * 60)
-        return when {
-            diffInMinutes < 1 -> "Synced just now"
-            diffInMinutes < 60 -> "Synced ${diffInMinutes}m ago"
-            else -> "Synced ${diffInMinutes / 60}h ago"
-        }
-    }
 }

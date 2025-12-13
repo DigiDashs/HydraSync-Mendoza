@@ -1,23 +1,20 @@
 package com.example.hydrasync.data
 
 import android.util.Log
-import com.example.hydrasync.history.DrinkEntry
 import com.google.firebase.database.ChildEventListener
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
-import java.text.SimpleDateFormat
+
 import java.util.*
 
 class WaterIntakeRepository private constructor() {
 
-    private val database: FirebaseDatabase = FirebaseDatabase.getInstance("https://hydrasync-14b0a-default-rtdb.asia-southeast1.firebasedatabase.app")
     private val userRepository = UserRepository.getInstance()
 
     // Store active listeners
@@ -43,90 +40,6 @@ class WaterIntakeRepository private constructor() {
 
     // ============ REAL-TIME LISTENERS ============
 
-    /**
-     * Observe water logs in real-time - automatically updates when ESP32 adds new data
-     */
-    fun observeWaterLogs(): Flow<List<WaterLog>> = callbackFlow {
-        val waterLogsRef = getWaterLogsReference() ?: run {
-            trySend(emptyList())
-            awaitClose()
-            return@callbackFlow
-        }
-
-        val valueEventListener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val waterLogs = mutableListOf<WaterLog>()
-
-                for (child in snapshot.children) {
-                    val waterLog = child.getValue(WaterLog::class.java)
-                    waterLog?.let {
-                        waterLogs.add(it.copy(id = child.key ?: ""))
-                    }
-                }
-
-                // Sort by timestamp descending (newest first)
-                val sortedLogs = waterLogs.sortedByDescending { it.timestamp }
-                trySend(sortedLogs).isSuccess
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                Log.e("WaterIntakeRepository", "Real-time listener cancelled: ${error.message}")
-                close(error.toException())
-            }
-        }
-
-        waterLogsRef.addValueEventListener(valueEventListener)
-        waterLogsListener = valueEventListener
-
-        awaitClose {
-            waterLogsListener?.let { listener ->
-                waterLogsRef.removeEventListener(listener)
-            }
-        }
-    }
-
-    /**
-     * Observe today's water logs in real-time
-     */
-    fun observeTodayWaterLogs(): Flow<List<WaterLog>> = callbackFlow {
-        val waterLogsRef = getWaterLogsReference() ?: run {
-            trySend(emptyList())
-            awaitClose()
-            return@callbackFlow
-        }
-
-        val valueEventListener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val waterLogs = mutableListOf<WaterLog>()
-                val todayDate = WaterLog.getCurrentFormattedDate()
-
-                for (child in snapshot.children) {
-                    val waterLog = child.getValue(WaterLog::class.java)
-                    waterLog?.let {
-                        if (it.toDrinkEntry().date == todayDate) {
-                            waterLogs.add(it.copy(id = child.key ?: ""))
-                        }
-                    }
-                }
-
-                // Sort by timestamp descending
-                val sortedLogs = waterLogs.sortedByDescending { it.timestamp }
-                trySend(sortedLogs).isSuccess
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                Log.e("WaterIntakeRepository", "Today's logs listener cancelled: ${error.message}")
-                close(error.toException())
-            }
-        }
-
-        waterLogsRef.addValueEventListener(valueEventListener)
-        waterLogsListener = valueEventListener
-
-        awaitClose {
-            waterLogsListener?.let { waterLogsRef.removeEventListener(it) }
-        }
-    }
 
     /**
      * Observe today's total intake in real-time
@@ -294,17 +207,6 @@ class WaterIntakeRepository private constructor() {
         } catch (e: Exception) {
             Log.e("WaterIntakeRepository", "Error updating water log: ${e.message}", e)
             false
-        }
-    }
-
-    // Get water log by ID
-    suspend fun getWaterLogById(waterLogId: String): WaterLog? {
-        return try {
-            val waterLogsRef = getWaterLogsReference() ?: return null
-            val snapshot = waterLogsRef.child(waterLogId).get().await()
-            snapshot.getValue(WaterLog::class.java)?.copy(id = waterLogId)
-        } catch (e: Exception) {
-            null
         }
     }
 

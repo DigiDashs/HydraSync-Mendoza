@@ -26,7 +26,6 @@ class LoginRepository private constructor() {
             val firebaseUser = authResult.user
 
             if (firebaseUser != null) {
-                // Convert FirebaseUser to our User model
                 val names = firebaseUser.displayName?.split(" ") ?: listOf("", "")
                 val user = User(
                     uid = firebaseUser.uid,
@@ -81,7 +80,7 @@ class LoginRepository private constructor() {
     }
 
     private fun updateDevicePairing(activeUid: String?) {
-        val deviceId = "ESP32_001" // ⚙️ your actual ESP32 device ID
+        val deviceId = "ESP32_001"
         val ref = FirebaseDatabase.getInstance(
             "https://hydrasync-14b0a-default-rtdb.asia-southeast1.firebasedatabase.app"
         ).getReference("pairing/$deviceId/activeUser")
@@ -99,10 +98,4 @@ class LoginRepository private constructor() {
             }
     }
 
-
-    // removed methods
-    // - getAllUsers()
-    // - registerUser()
-    // - userCredentials map
-    // - registeredUsers list
 }

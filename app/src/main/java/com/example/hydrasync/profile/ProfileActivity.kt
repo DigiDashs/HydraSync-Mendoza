@@ -222,7 +222,6 @@ class ProfileActivity : AppCompatActivity(), ProfileContract.View {
             }
         }
 
-        // Ensure we're in view mode when profile is loaded
         exitEditMode()
     }
 
@@ -233,7 +232,6 @@ class ProfileActivity : AppCompatActivity(), ProfileContract.View {
         tvUserName.text = "${etFirstName.text} ${etLastName.text}"
         tvUserEmail.text = etEmail.text.toString()
 
-        // Exit edit mode after successful save
         exitEditMode()
     }
 

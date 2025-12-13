@@ -30,10 +30,9 @@ data class WaterLog(
 
         private fun formatDisplayDate(dateString: String): String {
             return try {
-                // Convert from "2025-10-2106:49:18" to "Oct 21, 2025"
                 val inputFormat = SimpleDateFormat("yyyy-MM-ddHH:mm:ss", Locale.getDefault())
                 val outputFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
-                val date = inputFormat.parse(dateString) ?: Date() // Fix: Handle null case
+                val date = inputFormat.parse(dateString) ?: Date() //
                 outputFormat.format(date)
             } catch (e: Exception) {
                 // Fallback to today's date

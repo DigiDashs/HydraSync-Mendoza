@@ -7,8 +7,8 @@ interface HomeContract {
         fun displayHomeData(homeData: HomeData)
         fun showAddIntakeDialog()
         fun updateWaterProgress(intake: WaterIntake)
-        fun showGoalAchieved() // New method for goal celebration
-        fun showGoalProgress(percentage: Int, isGoalAchieved: Boolean) // Enhanced progress
+        fun showGoalAchieved()
+        fun showGoalProgress(percentage: Int, isGoalAchieved: Boolean)
         fun navigateToLogin()
         fun navigateToHistory()
         fun navigateToSettings()
@@ -20,8 +20,8 @@ interface HomeContract {
         fun loadHomeData()
         fun onAddIntakeClicked()
         fun addWaterIntake(amount: Int)
-        fun setDailyGoal(goal: Int) // New method for setting goals
-        fun resetDailyProgress() // New method for daily reset
+        fun setDailyGoal(goal: Int)
+        fun resetDailyProgress()
         fun onHistoryClicked()
         fun onSettingsClicked()
         fun onLogoutClicked()

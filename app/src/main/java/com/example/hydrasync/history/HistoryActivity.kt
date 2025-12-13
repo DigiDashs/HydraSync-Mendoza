@@ -15,7 +15,7 @@ import com.example.hydrasync.settings.SettingsActivity
 
 class HistoryActivity : AppCompatActivity(), HistoryView {
     private lateinit var presenter: HistoryPresenter
-    private lateinit var historyContainer: LinearLayout // Changed from todayHistoryContainer
+    private lateinit var historyContainer: LinearLayout
     private lateinit var emptyStateContainer: LinearLayout
     private lateinit var progressBar: ProgressBar
 
@@ -35,7 +35,6 @@ class HistoryActivity : AppCompatActivity(), HistoryView {
     }
 
     private fun initializeViews() {
-        // Use the new historyContainer instead of todayHistoryContainer
         historyContainer = findViewById(R.id.historyContainer)
         emptyStateContainer = findViewById(R.id.emptyStateContainer)
 
@@ -49,7 +48,6 @@ class HistoryActivity : AppCompatActivity(), HistoryView {
         presenter.loadDrinkHistory()
     }
 
-    // Updated HistoryView implementation
     override fun showHistoryByDate(historyByDate: Map<String, List<DrinkEntry>>) {
         historyContainer.removeAllViews()
 
@@ -117,7 +115,6 @@ class HistoryActivity : AppCompatActivity(), HistoryView {
         }
     }
 
-    // Your existing methods remain the same
     private fun createHistoryEntryView(entry: DrinkEntry): View {
         val entryView = LayoutInflater.from(this)
             .inflate(R.layout.item_history_entry, null)
@@ -152,7 +149,6 @@ class HistoryActivity : AppCompatActivity(), HistoryView {
         }
     }
 
-    // Your existing showEditDialog, showDeleteConfirmation, and navigation methods remain the same
     override fun showEditDialog(entry: DrinkEntry) {
         val currentAmount = entry.amount.replace(" ML", "").toIntOrNull() ?: 250
 

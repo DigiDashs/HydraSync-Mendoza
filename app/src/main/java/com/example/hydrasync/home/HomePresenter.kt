@@ -81,7 +81,6 @@ class HomePresenter(private var view: HomeContract.View?) : HomeContract.Present
                 }
                 .collect()
 
-            // Optional: Listen specifically for new log entries from ESP32
             waterRepository.observeNewWaterLogs()
                 .onEach { newLog ->
                     Log.d("HydraSync", "🆕 New entry from ESP32: ${newLog.amount}ml")
