@@ -115,6 +115,7 @@ class ProfileActivity : AppCompatActivity(), ProfileContract.View {
 
                 DatePickerDialog(
                     this,
+                    R.style.Theme_HydraSync_DatePicker,
                     datePickerListener,
                     calendar.get(Calendar.YEAR),
                     calendar.get(Calendar.MONTH),
@@ -134,7 +135,6 @@ class ProfileActivity : AppCompatActivity(), ProfileContract.View {
         isEditMode = true
         originalProfile = getCurrentProfile()
 
-        // Enable all fields with proper background
         setEditTextEditable(etFirstName, true)
         setEditTextEditable(etLastName, true)
         setEditTextEditable(etEmail, true)
@@ -145,7 +145,6 @@ class ProfileActivity : AppCompatActivity(), ProfileContract.View {
         tilBirthday.isEnabled = true
         setEditTextEditable(etBirthday, true)
 
-        // Show save/cancel buttons, hide edit button
         llEditButtons.visibility = LinearLayout.VISIBLE
         btnEdit.visibility = Button.GONE
     }
@@ -153,7 +152,11 @@ class ProfileActivity : AppCompatActivity(), ProfileContract.View {
     private fun exitEditMode() {
         isEditMode = false
 
-        // Disable all fields with locked background
+        etFirstName.clearFocus()
+        etLastName.clearFocus()
+        etEmail.clearFocus()
+        etBirthday.clearFocus()
+
         setEditTextEditable(etFirstName, false)
         setEditTextEditable(etLastName, false)
         setEditTextEditable(etEmail, false)
@@ -164,12 +167,12 @@ class ProfileActivity : AppCompatActivity(), ProfileContract.View {
         tilBirthday.isEnabled = false
         setEditTextEditable(etBirthday, false)
 
-        // Show edit button, hide save/cancel buttons
         llEditButtons.visibility = LinearLayout.GONE
         btnEdit.visibility = Button.VISIBLE
     }
 
     private fun setEditTextEditable(editText: EditText, editable: Boolean) {
+        editText.isEnabled = editable
         editText.isFocusable = editable
         editText.isFocusableInTouchMode = editable
         editText.isClickable = editable
@@ -177,8 +180,10 @@ class ProfileActivity : AppCompatActivity(), ProfileContract.View {
 
         if (editable) {
             editText.background = ContextCompat.getDrawable(this, android.R.drawable.edit_text)
+            editText.keyListener = EditText(this).keyListener
         } else {
             editText.background = ContextCompat.getDrawable(this, R.drawable.edit_text_locked)
+            editText.keyListener = null
         }
     }
 

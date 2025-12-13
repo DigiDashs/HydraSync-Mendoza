@@ -69,17 +69,4 @@ data class HomeData(
     val isConnected: Boolean = true,
     val lastSyncTime: Long = System.currentTimeMillis(),
     val goalAchievedToday: Boolean = false
-) {
-    fun getConnectionStatusText(): String {
-        return if (isConnected) "Connected" else "Disconnected"
-    }
-
-    fun getLastSyncText(): String {
-        val diffInMinutes = (System.currentTimeMillis() - lastSyncTime) / (1000 * 60)
-        return when {
-            diffInMinutes < 1 -> "Synced just now"
-            diffInMinutes < 60 -> "Synced ${diffInMinutes}m ago"
-            else -> "Synced ${diffInMinutes / 60}h ago"
-        }
-    }
-}
+)

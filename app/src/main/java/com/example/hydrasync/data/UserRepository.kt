@@ -104,16 +104,6 @@ class UserRepository private constructor() {
         }
     }
 
-    // Get current user's UID
-    fun getCurrentUserId(): String? {
-        return firebaseAuth.currentUser?.uid
-    }
-
-    // Check if user is logged in
-    fun isUserLoggedIn(): Boolean {
-        return firebaseAuth.currentUser != null
-    }
-
     // Update user profile
     suspend fun updateUserProfile(user: User): Boolean {
         return try {

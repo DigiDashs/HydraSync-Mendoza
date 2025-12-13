@@ -83,16 +83,4 @@ class RegisterRepository private constructor() {
         }
     }
 
-    fun getCurrentUser(): com.example.hydrasync.login.User? {
-        val firebaseUser = firebaseAuth.currentUser
-        return firebaseUser?.let { user ->
-            val names = user.displayName?.split(" ") ?: listOf("", "")
-            com.example.hydrasync.login.User(
-                uid = user.uid,
-                email = user.email ?: "",
-                firstName = names.getOrNull(0) ?: "",
-                lastName = names.getOrNull(1) ?: ""
-            )
-        }
-    }
 }
