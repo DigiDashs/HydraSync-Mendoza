@@ -28,7 +28,10 @@ class Esp32Presenter(private val view: Esp32Contract.View) : Esp32Contract.Prese
                 if (conn.responseCode == 200) {
                     withContext(Dispatchers.Main) {
                         view.showToast("Credentials sent successfully!")
-                        startStatusPolling()
+                        // wait a few seconds for the ESP32 to reboot
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            startStatusPolling()
+                        }, 5000) // 5 seconds
                     }
                 } else {
                     withContext(Dispatchers.Main) {
